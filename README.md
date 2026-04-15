@@ -10,6 +10,8 @@
 
 모든 모듈은 기본적으로 **선택 사항**입니다. 필요한 모듈만 골라 쓸 수 있으며, 전체를 한꺼번에 출력하도록 강제하지 않습니다.
 
+현재 플러그인 버전은 `0.1.0`입니다.
+
 ---
 
 ## 포함 모듈
@@ -68,10 +70,39 @@ Codex CLI에서 로컬 플러그인으로 설치합니다.
 
 ```bash
 # 저장소 클론
-git clone https://github.com/newskool4d-sketch/lesson-total-package
+git clone https://github.com/newskool4d-sketch/lesson-total-package.git
+cd lesson-total-package
 
-# Codex에서 플러그인 경로 등록 후 사용
+# Codex 플러그인 디렉터리로 복사 또는 연결
+# plugin.json 이 있는 루트 디렉터리를 등록 대상으로 사용
 ```
+
+플러그인 메타데이터는 `.codex-plugin/plugin.json`에 있고, 실제 스킬 본문은 `skills/class-total-package/` 아래에 있습니다.
+
+---
+
+## 저장소 구조
+
+| 경로 | 내용 |
+|------|------|
+| `.codex-plugin/plugin.json` | 플러그인 메타데이터와 인터페이스 정의 |
+| `skills/class-total-package/SKILL.md` | 핵심 스킬 설명과 실행 규칙 |
+| `skills/class-total-package/agents/openai.yaml` | 에이전트 설정 |
+| `skills/class-total-package/references/` | 예시 프롬프트, 조합 규칙, 검증 시나리오 |
+
+---
+
+## 개발 및 배포
+
+```bash
+# 변경 확인
+git status
+
+# 버전 태그 확인
+git tag
+```
+
+첫 공개 버전 태그는 `v0.1.0`을 기준으로 관리합니다.
 
 ---
 
