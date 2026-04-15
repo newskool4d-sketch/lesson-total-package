@@ -1,0 +1,42 @@
+{
+  "name": "lesson-total-package",
+  "version": "0.1.0",
+  "description": "Selectable teaching package plugin that bundles lesson planning modules for board-writing, mind maps, PBL, and inquiry-report assessment.",
+  "author": {
+    "name": "Hong Ju-hyung",
+    "email": "newskool4d@gmail.com",
+    "url": "https://github.com/newskool4d-sketch"
+  },
+  "homepage": "https://github.com/newskool4d-sketch/lesson-total-package#readme",
+  "repository": "https://github.com/newskool4d-sketch/lesson-total-package",
+  "license": "MIT",
+  "keywords": [
+    "education",
+    "lesson",
+    "pbl",
+    "assessment",
+    "mindmap",
+    "board-writing"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Lesson Total Package",
+    "shortDescription": "Selectable package for board-writing, mind map, PBL, and assessment",
+    "longDescription": "Build Korean lesson packages by selectively combining board-writing, mind map, PBL, and inquiry-report assessment modules instead of forcing a fixed bundle.",
+    "developerName": "Hong Ju-hyung",
+    "category": "Education",
+    "capabilities": [
+      "Write",
+      "Planning"
+    ],
+    "websiteURL": "https://github.com/newskool4d-sketch/lesson-total-package",
+    "privacyPolicyURL": "https://github.com/newskool4d-sketch/lesson-total-package/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/newskool4d-sketch/lesson-total-package/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Bundle only board-writing and mind map for this lesson.",
+      "Design PBL and inquiry-report assessment together.",
+      "Connect board-writing, mind map, PBL, and assessment."
+    ],
+    "brandColor": "#2F6B5F"
+  }
+}

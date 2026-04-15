@@ -1,0 +1,7 @@
+version: 1
+interface:
+  display_name: 수업 패키지 설계기
+  short_description: 선택형 수업 모듈 패키지를 연결 설계하는 번들 스킬
+  default_prompt: 필요한 모듈만 골라 한국어 수업 패키지를 설계하라. 판서, 마인드맵, PBL, 수행평가 중 요청에 필요한 요소만 활성화하고, 선택하지 않은 모듈은 제안 수준에만 머물러라.
+policy:
+  allow_implicit_invocation: true
