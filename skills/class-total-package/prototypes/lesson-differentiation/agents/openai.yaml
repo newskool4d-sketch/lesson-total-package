@@ -1,0 +1,7 @@
+interface:
+  display_name: "수업 차별화 설계기 (프로토타입)"
+  short_description: "동일 목표를 유지하는 비식별 학습자 지원 프로필 설계"
+  default_prompt: "Prototype only. Use this logic for an existing lesson that needs support, core, and extension profiles. Preserve the same goal, context, and cognitive demand; do not expose ability labels in student materials."
+version: 1
+policy:
+  allow_implicit_invocation: false

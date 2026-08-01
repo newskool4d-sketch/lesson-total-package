@@ -1,59 +1,61 @@
 ---
 name: class-total-package
-description: Use when the user wants a Korean lesson package that selectively combines existing teaching skills such as board-writing, mind map, PBL lesson design, and inquiry-report assessment rather than forcing a fixed bundle. Trigger for requests like 수업 토탈 패키지, 수업팩, 수업 번들, 판서+마인드맵+PBL 묶기, 수행평가까지 포함한 수업 설계, or 선택형 수업 모듈 구성.
+description: Assemble Korean lesson packages by routing to board-writing, mind map, worksheet, PBL, or assessment modules as needed.
 metadata:
   short-description: 선택형 수업 모듈 패키지를 연결 설계하는 번들 스킬
 ---
 
 # Class Total Package
 
+## Safety And Preflight
+
+- Do not expose student personal data or private school records in lesson packages.
+- Verify source files, curriculum scope, grade level, and output destination before creating bundled artifacts.
+- If connector or sandbox writes fail, provide local Markdown/HTML fallback output and report the blocked path.
+
 Use this skill to orchestrate a lesson package from multiple teaching modules.
+
+This is a bundle and routing skill, not the default for single outputs.
+
+- Use it when two or more lesson modules need to be linked.
+- Do not swallow single-module requests that have a clearer direct skill.
+- If the user only wants PBL, 판서, 마인드맵, HTML 학습지, or 수행평가 alone, prefer the direct module skill.
 
 Read these bundled files only when needed:
 
 - For package selection and linking logic, use [references/package-rules.md](references/package-rules.md)
+- For the shared anchor block contract, use [references/package-anchor-contract.md](references/package-anchor-contract.md)
+- For package-level IDs, source status, safety gates, and cross-artifact validation, use [references/package-manifest-contract.md](references/package-manifest-contract.md)
 - For template-first composition rules, use [references/template-composition-guide.md](references/template-composition-guide.md)
 - For representative invocation examples, use [references/example-prompts.md](references/example-prompts.md)
 - For smoke-test validation scenarios, use [references/validation-scenarios.md](references/validation-scenarios.md)
+- For routing regression checks after skill changes, use [references/routing-smoke-test.md](references/routing-smoke-test.md)
+- For the shared P/R/O/M/S quality criteria and fixture runner, use `evals/rubrics/shared.csv` and `scripts/run_contract_tests.py`
+- For learner variability, subject pedagogy, and audience density rules, use [references/learner-variability-rules.md](references/learner-variability-rules.md), [references/subject-pedagogy-routing.md](references/subject-pedagogy-routing.md), and [references/audience-and-density-rules.md](references/audience-and-density-rules.md)
 
 ## Core rule
 
 - Do not assume every module must be used.
 - Let the user's request determine which modules are required now.
 - If the user does not specify modules, infer a sensible minimal set and state the assumption.
+- Keep single-module requests out of this bundle unless the user explicitly asks for a package structure.
 
 ## Current module set
 
 - `board-writing-generator` (optional)
 - `mindmap-html-generator` (optional)
+- `html-worksheet-generator` (optional)
 - `pbl-lesson-designer` (optional)
 - `inquiry-report-assessment` (optional)
 
-## All-modules-optional rule
+## Selection and template rules
 
-Treat every module in this package as optional by default.
-
-- Never assume any module is mandatory.
+- Treat every module as optional by default.
 - Activate only the modules the user explicitly requests or clearly approves.
-- When the user asks for one or two modules only, do not add the others unless the user asks for suggestions.
 - Present non-selected modules only as optional suggestions.
-
-## Template-first rule
-
-When a selected module already has a reusable template pack, prefer composing from that pack instead of inventing the structure from scratch.
-
-- For `pbl-lesson-designer`, prefer `references/pbl-template-pack.md`
-- For `inquiry-report-assessment`, prefer:
-  - `references/inquiry-report-template-pack.md`
-  - `references/inquiry-report-template-pack-middle.md`
-  - `references/inquiry-report-template-pack-high.md`
-  - `references/inquiry-report-template-pack-social.md`
-
-Use freeform generation only when:
-
-- the user asks for a novel format
-- the template does not fit the lesson type
-- the template needs substantial adaptation
+- Prefer linked module template packs when they fit the request.
+- For detailed selection, handoff, and AI-literacy rules, read [references/package-rules.md](references/package-rules.md).
+- For linked template pack rules, read [references/template-composition-guide.md](references/template-composition-guide.md).
 
 ## Module invocation rules
 
@@ -61,56 +63,17 @@ Use the module names explicitly in planning and execution.
 
 - If the user asks for `판서`, invoke the logic of `board-writing-generator`
 - If the user asks for `마인드맵`, invoke the logic of `mindmap-html-generator`
+- If the user asks for `HTML 학습지`, `PDF 교과서 학습지`, or print-ready worksheet output, invoke the logic of `html-worksheet-generator`
 - If the user asks for `PBL`, invoke the logic of `pbl-lesson-designer`
 - If the user asks for `수행평가`, `탐구 보고서`, or `평가 기준`, invoke the logic of `inquiry-report-assessment`
 
-If the user asks for a package without naming modules, choose from this matrix:
-
-- 개념 정리 중심 수업 -> `board-writing-generator` or `mindmap-html-generator`
-- 수업 시각화까지 필요 -> `board-writing-generator` + `mindmap-html-generator`
-- 프로젝트형 문제 해결 -> `pbl-lesson-designer`
-- 보고서형 결과물 평가 -> `inquiry-report-assessment`
-- 수업과 평가를 함께 설계 -> `pbl-lesson-designer` + `inquiry-report-assessment`
-- 전체 수업 패키지 -> all four modules when useful
+If the user asks for a package without naming modules, infer the minimal useful module set from [references/package-rules.md](references/package-rules.md).
 
 ## Package logic
 
 Treat the package as a selectable set of lesson components, not a fixed production line.
 
-Typical selectable outputs:
-
-- lesson overview
-- board-writing plan
-- concept or mind map
-- PBL lesson flow
-- inquiry report performance assessment
-- teacher facilitation notes
-- template-based worksheets or forms
-
-## Default module selection logic
-
-- concept-heavy lesson -> prefer `board-writing-generator` + `mindmap-html-generator`
-- project or problem solving lesson -> prefer `pbl-lesson-designer`
-- inquiry evidence or writing outcome needed -> prefer `inquiry-report-assessment`
-- if the user asks for a full package -> combine all relevant modules
-
-## Template selection logic
-
-If the package includes `inquiry-report-assessment`, choose the template pack like this:
-
-- middle school or simpler classroom use -> middle template
-- high school or more analytical work -> high template
-- social studies inquiry -> social studies template
-- unspecified general case -> basic template
-
-If the package includes `pbl-lesson-designer`, use the PBL template pack as the default scaffold for:
-
-- PBL overview
-- phase plan
-- team role sheet
-- inquiry record
-- AI verification log
-- mid-project checkpoint
+Typical selectable outputs include lesson overview, board-writing plan, concept map, PDF-grounded HTML worksheet, PBL flow, inquiry-report assessment, teacher notes, and template-based worksheets.
 
 ## Required package workflow
 
@@ -118,41 +81,33 @@ If the package includes `pbl-lesson-designer`, use the PBL template pack as the 
 2. Identify which modules are explicitly requested.
 3. Infer optional modules that materially improve the lesson flow.
 4. Separate `required modules` from `optional modules`.
-5. Produce only the required outputs unless the user asks for more.
-6. Keep terminology, inquiry question, and activity sequence consistent across all selected modules.
-7. In the response, label which output came from which module when multiple modules are combined.
-8. Prefer template-based outputs when the selected modules already provide reusable packs.
-9. Keep all non-selected modules inactive.
+5. When two or more modules are selected, fix the shared anchor block first using [references/package-anchor-contract.md](references/package-anchor-contract.md), show it to the user, then insert the identical block at the top of every module output.
+6. For package-mode work, create or update the internal package manifest before generating module artifacts; run `scripts/validate_package.py` when a manifest and local artifact paths are available.
+7. Produce only the required outputs unless the user asks for more.
+8. Keep terminology, inquiry question, and activity sequence consistent across all selected modules.
+9. In the response, label which output came from which module when multiple modules are combined.
+10. Prefer template-based outputs when the selected modules already provide reusable packs.
+11. Keep all non-selected modules inactive.
 
 ## PBL and assessment core requirements
 
-When the selected modules include `pbl-lesson-designer` or `inquiry-report-assessment`, always build around these learning actions:
+When selected modules include PBL or inquiry-report assessment, apply the AI-literacy and evidence-checking rules in [references/package-rules.md](references/package-rules.md).
 
-- discussion
-- writing
-- exploration or research
-- appropriate and critical AI use
-- information verification
+## Output storage
 
-Never present AI use as simple answer generation.
+When the package produces multiple files, save them under one folder:
 
-Always require students to:
-
-- distinguish claim from evidence
-- compare AI output with source-based information
-- record how AI was used
-- verify important facts through credible materials
-- reflect on bias, omission, or hallucination risk
+- folder: `수업패키지_{주제}(YYYY-MM-DD)/`
+- file prefixes by module: `00_패키지개요` `01_판서` `02_마인드맵` `03_학습지` `04_PBL` `05_수행평가` `06_교사메모`
+- confirm the destination root (Vault vs local) with the user before writing when not specified
 
 ## Output modes
 
-Choose the output breadth based on the request:
-
-- `간단형`: only the selected core modules
+- `간단형`: selected core modules only
 - `수업형`: selected modules plus teacher notes and flow
 - `패키지형`: selected modules plus linked assessment and artifact plan
 
-If the user does not specify a mode, default to `수업형`.
+Default to `수업형` when unspecified.
 
 ## Response structure
 
@@ -169,26 +124,7 @@ If only one or two modules are selected, do not force the full structure.
 
 ## Output composition examples
 
-- `판서 + 마인드맵`
-  - board layout
-  - concept map structure
-- `PBL`
-  - PBL overview
-  - phase plan
-  - team role sheet
-  - inquiry record
-- `수행평가`
-  - student task sheet
-  - rubric
-  - AI verification log if needed
-  - teacher feedback form
-- `PBL + 수행평가`
-  - PBL overview
-  - phase plan
-  - inquiry report task sheet
-  - rubric
-  - mid-project checkpoint
-  - teacher feedback and record memo
+For composition examples and validation scenarios, read `references/example-prompts.md`, `references/template-composition-guide.md`, and `references/validation-scenarios.md` as needed.
 
 ## Quality checklist
 
@@ -196,7 +132,13 @@ Before finishing, confirm all of the following:
 
 - the package uses only the modules that are needed
 - optional modules are clearly separated from required modules
+- the anchor block is character-identical at the top of every module output, and includes 성취기준 (code or `확인 필요`)
 - PBL and assessment outputs include discussion, writing, exploration, AI verification, and source checking
 - terminology is consistent across selected outputs
 - the assessment matches the lesson activity rather than sitting separately
 - template packs are used when they fit the request
+- HTML worksheets, when selected, remain source-grounded and pass basic file/path validation
+- package-mode manifests pass the package-level ID, timing, source, privacy, and audience gates when the validator is available
+- the shared P/R/O/M/S rubric contains 24 unique criteria and its fixture suite passes before release
+- learner profiles are non-identifying, preserve cognitive demand, and include a regrouping rule
+- subject pedagogy profiles match the requested subject and include at least one non-negotiable principle

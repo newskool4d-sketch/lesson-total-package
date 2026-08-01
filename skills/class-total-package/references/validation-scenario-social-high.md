@@ -10,6 +10,12 @@ Use this note as a smoke-test example for `class-total-package`.
 - output mode: `패키지형`
 - emphasis: discussion, writing, exploration, AI verification
 
+## Why package mode is correct
+
+- two learning modules must stay aligned as one lesson
+- the assessment is not standalone; it is attached to the PBL flow
+- direct-skill routing would weaken the shared artifact and evaluation alignment
+
 ## Expected module choice
 
 - required:
@@ -52,3 +58,4 @@ Use this note as a smoke-test example for `class-total-package`.
 - high-school level wording is maintained
 - discussion, evidence comparison, and AI verification are visible
 - PBL flow and assessment task read as one connected lesson
+- this scenario is not reduced to a standalone assessment or standalone PBL output

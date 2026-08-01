@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "package_id": "fixture-invalid-001",
+  "output_mode": "수업형",
+  "context": {
+    "topic": "잘못된 fixture",
+    "subject": "과학",
+    "school_level": "중학교",
+    "grade_band": "중학교 1-3학년군",
+    "duration_minutes": 45
+  },
+  "standard": {
+    "code": "[9과03-01]",
+    "text": "확인되지 않은 성취기준",
+    "status": "pending",
+    "source": ""
+  },
+  "anchor": {
+    "topic": "잘못된 fixture",
+    "grade_band": "중학교 1-3학년군",
+    "subject": "과학",
+    "objective": "검증 실패를 확인한다.",
+    "essential_question": "어떤 검사가 실패하는가?",
+    "key_concepts": ["검증"],
+    "student_actions": ["확인한다"],
+    "final_artifact": "오류 목록",
+    "evaluation_points": ["오류 근거"]
+  },
+  "learner_profile": {
+    "mode": "default",
+    "supports": [],
+    "reading_access": "짧은 문장",
+    "udl_defaults": ["용어 풀이", "기록표"],
+    "grouping_basis": "fixture 확인",
+    "regrouping_rule": "다시 확인한다.",
+    "no_ability_labels": true,
+    "cognitive_demand_preserved": true,
+    "scaffold_fade": true
+  },
+  "pedagogy_profile": {
+    "subject": "과학",
+    "non_negotiables": ["근거 확인"],
+    "selected_checks": ["오류 근거"]
+  },
+  "modules": [
+    {"module_id": "board-writing-generator", "active": false, "required": false}
+  ],
+  "tasks": [
+    {
+      "task_id": "task-invalid",
+      "phase": "탐구",
+      "student_action": "확인한다.",
+      "evidence": "메모",
+      "minutes": 45,
+      "module_owners": ["board-writing-generator"]
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "source-invalid",
+      "type": "unknown",
+      "location": "missing.txt",
+      "verification_status": "pending",
+      "copyright_status": "unknown"
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact-invalid",
+      "module_id": "board-writing-generator",
+      "audience": "student",
+      "required": true,
+      "path": "artifacts/missing.md",
+      "task_ids": ["task-invalid"],
+      "source_ids": ["source-invalid"]
+    }
+  ],
+  "criteria": [
+    {
+      "criterion_id": "criterion-invalid",
+      "task_ids": ["task-invalid"],
+      "evidence_required": "오류 근거",
+      "feedback_use": "수정"
+    }
+  ],
+  "safety": {
+    "pii_check": "pending",
+    "ai_verification_required": false,
+    "license_notice_required": false
+  }
+}

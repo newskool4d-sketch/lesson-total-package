@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "differentiation_id": "diff-invalid-001",
+  "source_package_id": "fixture-science-001",
+  "subject": "과학",
+  "grade_band": "중학교 1-3학년군",
+  "standard": {"code": "[9과03-01]", "status": "verified"},
+  "shared_context": "연못 생태계",
+  "shared_objective": "상호작용을 설명한다.",
+  "core_task_ids": ["task-observe", "task-exit"],
+  "tiers": [
+    {"tier_id": "support", "teacher_label": "지원", "student_label": "보충반", "task_ids": ["task-observe"], "scaffolds": [], "scaffold_fade": false, "extension_task_ids": []},
+    {"tier_id": "core", "teacher_label": "기본", "student_label": "활동지", "task_ids": ["task-observe", "task-exit"], "scaffolds": ["용어 풀이"], "scaffold_fade": true, "extension_task_ids": []}
+  ],
+  "grouping": {"basis": "고정 수준", "revisable": false},
+  "artifacts": [],
+  "safety": {"pii_check": "pending", "no_ability_labels": false}
+}

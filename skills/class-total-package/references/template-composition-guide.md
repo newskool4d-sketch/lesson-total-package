@@ -5,6 +5,7 @@ Use this reference when `class-total-package` needs to assemble outputs from lin
 ## Core principle
 
 Do not start from a blank page when a linked module already has a strong reusable template.
+Do not invoke template composition at all when the request is clearly single-module and should be routed to a direct skill.
 
 ## Linked template packs
 
@@ -46,6 +47,7 @@ Recommended outputs:
 - school level first
 - subject next
 - module purpose after that
+- confirm that this is actually a multi-module package before composing
 
 ### School level rule
 
@@ -66,6 +68,12 @@ When several modules are selected:
 - unify the evaluation point wording
 
 Then assemble the minimum useful output set.
+
+If only one module is selected:
+
+- do not wrap it in package framing by default
+- prefer the direct module output shape
+- use package composition only if the user explicitly asked for package framing
 
 ## Minimum useful output sets
 
