@@ -6,9 +6,17 @@ Use these as representative invocation patterns for `class-total-package`.
 
 - 수업 토탈 패키지에서 모든 스킬은 선택사항으로 두고, 이번에는 판서와 PBL만 묶어 줘.
 - 수업 패키지로 사회과 수업을 구성해 줘. 판서와 마인드맵만 있으면 돼.
-- 고등학교 과학 수업용 패키지 만들어 줘. PBL만 먼저 설계해 줘.
 - 탐구 보고서 수행평가만 필요해. 고등학생 수준으로 만들어 줘.
 - 중학생용 수업 패키지로 PBL과 수행평가를 같이 묶어 줘.
+
+## Direct-skill handoff examples
+
+These should not trigger `class-total-package` as the first choice:
+
+- PBL만 설계해 줘.
+- 판서안만 만들어 줘.
+- HTML 마인드맵만 만들어 줘.
+- 탐구 보고서 수행평가만 짜 줘.
 
 ## Subject-specific package requests
 

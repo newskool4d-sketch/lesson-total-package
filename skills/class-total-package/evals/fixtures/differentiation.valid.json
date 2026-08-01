@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "differentiation_id": "diff-fixture-001",
+  "source_package_id": "fixture-science-001",
+  "subject": "과학",
+  "grade_band": "중학교 1-3학년군",
+  "standard": {"code": "[9과03-01]", "status": "verified"},
+  "shared_context": "연못 생태계의 상호작용",
+  "shared_objective": "생태계 구성 요소의 상호작용을 근거와 함께 설명한다.",
+  "core_task_ids": ["task-observe", "task-exit"],
+  "tiers": [
+    {"tier_id": "support", "teacher_label": "지원 프로필", "student_label": "활동지", "task_ids": ["task-observe", "task-exit"], "scaffolds": ["관찰 기록표", "설명 문장 틀"], "scaffold_fade": true, "extension_task_ids": []},
+    {"tier_id": "core", "teacher_label": "기본 프로필", "student_label": "활동지", "task_ids": ["task-observe", "task-exit"], "scaffolds": ["핵심 용어 풀이"], "scaffold_fade": true, "extension_task_ids": []},
+    {"tier_id": "extension", "teacher_label": "확장 프로필", "student_label": "활동지", "task_ids": ["task-observe", "task-exit"], "scaffolds": ["핵심 용어 풀이"], "scaffold_fade": true, "extension_task_ids": ["task-transfer"]}
+  ],
+  "grouping": {"basis": "관찰 기록과 출구 ticket", "revisable": true},
+  "artifacts": [
+    {"artifact_id": "support-sheet", "tier_id": "support", "audience": "student", "path": "artifacts/diff-support.md", "task_ids": ["task-observe", "task-exit"]},
+    {"artifact_id": "core-sheet", "tier_id": "core", "audience": "student", "path": "artifacts/diff-core.md", "task_ids": ["task-observe", "task-exit"]},
+    {"artifact_id": "extension-sheet", "tier_id": "extension", "audience": "student", "path": "artifacts/diff-extension.md", "task_ids": ["task-observe", "task-exit", "task-transfer"]}
+  ],
+  "safety": {"pii_check": "passed", "no_ability_labels": true}
+}

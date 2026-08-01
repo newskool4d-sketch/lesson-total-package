@@ -10,6 +10,12 @@ Use this note as a smoke-test example for `class-total-package`.
 - output mode: `수업형`
 - emphasis: concept clarity, visual structure, classroom readability
 
+## Why package mode is correct
+
+- two modules are explicitly requested together
+- the user needs shared concept vocabulary across board and mind map outputs
+- direct-skill routing would miss the cross-module alignment check
+
 ## Expected module choice
 
 - required:
@@ -48,3 +54,4 @@ Use this note as a smoke-test example for `class-total-package`.
 - board and mind map use the same concept vocabulary
 - output remains classroom-ready, not document-heavy
 - visual mode stays within `수업형` breadth
+- this scenario is not expanded into a four-module package

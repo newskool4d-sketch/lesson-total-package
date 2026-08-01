@@ -106,6 +106,40 @@ git tag
 
 ---
 
+## 참고한 스킬 및 레퍼런스
+
+이 저장소의 개선·검증·학습지 산출물은 아래 자료를 참고했습니다. 외부 자료의 원문이나 사용자 보유 교과서 PDF는 저장소에 복제하지 않았습니다.
+
+### 구현에 사용한 Codex 스킬
+
+| 스킬 | 적용 범위 | 위치 또는 링크 |
+|------|------|------|
+| `class-total-package` | 모듈 선택, 공통 앵커, 패키지 manifest, 학습자·교과·대상 계약 | [`skills/class-total-package/SKILL.md`](./skills/class-total-package/SKILL.md) |
+| `html-worksheet-generator` | PDF 근거 학습지, A4 인쇄 CSS, 교사용·학생용 분리, HTML 검증 | Codex 로컬 런타임 스킬 |
+| `education-file-intake` | 교과서 PDF 페이지 범위 확인과 후속 학습지 라우팅 | Codex 로컬 런타임 스킬 |
+| `mcp-health` | MCP 등록·활성화 상태 진단 절차 | Codex 로컬 런타임 스킬 |
+| `github:yeet` | 변경 범위 확인, 작업 브랜치, 커밋·푸시 절차 | Codex GitHub 배포 스킬 |
+
+### 외부 레퍼런스
+
+| 레퍼런스 | 참고 내용 |
+|------|------|
+| [`anthropics/k12-teacher-skills`](https://github.com/anthropics/k12-teacher-skills) | 교사 업무 스킬 구조, 안전·검증·교사용 산출물 설계의 벤치마크 |
+| [`raphysicst-create/korean-secondary-learning-map-mcp`](https://github.com/raphysicst-create/korean-secondary-learning-map-mcp) | 중등 성취기준·주제·선수학습 관계 MCP의 연결 대상 |
+| [`newskool4d-sketch/lesson-total-package`](https://github.com/newskool4d-sketch/lesson-total-package) | 본 구현의 저장소·플러그인 구조·배포 기준 |
+
+### MCP 조회 근거
+
+`korean-secondary-learning-map` MCP에서 다음 2022 개정 중학교 사회 성취기준을 조회하여 국제 사회 학습지에 반영했습니다.
+
+- `[9사(일사)11-01]` 국제 사회를 구성하는 여러 행위 주체의 활동을 조사하고, 이를 토대로 국제 사회의 특징을 도출한다.
+- `[9사(일사)11-02]` 국제 사회의 다양한 분쟁에 대해 조사하고, 지역·국가·세계의 시민으로서 우리의 역할에 대해 토의한다.
+- 원자료 식별자: `kr-nec-2024-3-annex7`, 교육과정: `kr-2022-middle-사회`, 원문 PDF 71쪽
+
+교사용 교과서 PDF는 사용자가 제공한 로컬 원본을 근거로 109~110쪽만 읽었으며, 저작권 보호를 위해 저장소에는 포함하지 않았습니다.
+
+---
+
 ## 라이선스
 
 [MIT](./LICENSE)
