@@ -71,9 +71,11 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
         errors.append("tiers must be a list")
         tiers = []
     tier_ids = [tier.get("tier_id") for tier in tiers if isinstance(tier, dict)]
-    if set(tier_ids) != TIERS or len(tier_ids) != len(TIERS):
+    if any(not _nonempty(tier_id) for tier_id in tier_ids) or set(tier_ids) != TIERS or len(tier_ids) != len(TIERS):
         errors.append("tiers must contain exactly support, core, and extension")
 
+    allowed_tasks = {tier_id: set() for tier_id in TIERS}
+    required_tasks = {tier_id: set(core_task_ids) for tier_id in TIERS}
     for tier in tiers:
         if not isinstance(tier, dict):
             errors.append("tier must be an object")
@@ -98,10 +100,14 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
         extensions = tier.get("extension_task_ids")
         if not isinstance(extensions, list) or not all(_nonempty(item) for item in extensions):
             errors.append(f"tier {tier_id} extension_task_ids must be a string list")
+            extensions = []
         if tier_id == "support" and not scaffolds:
             errors.append("support tier requires at least one scaffold")
         if tier_id == "extension" and not extensions:
             errors.append("extension tier requires at least one extension task")
+        if _nonempty(tier_id) and tier_id in TIERS:
+            allowed_tasks[tier_id] = set(task_ids) | set(extensions)
+            required_tasks[tier_id].update(extensions)
 
     grouping = manifest["grouping"]
     if not isinstance(grouping, dict):
@@ -116,20 +122,31 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
     if not isinstance(artifacts, list) or not artifacts:
         errors.append("artifacts must be a non-empty list")
         artifacts = []
-    tier_ids_set = set(TIERS)
+    student_tiers: set[str] = set()
+    student_tasks = {tier_id: set() for tier_id in TIERS}
     for artifact in artifacts:
         if not isinstance(artifact, dict):
             errors.append("artifact must be an object")
             continue
         artifact_id = artifact.get("artifact_id", "<unknown>")
         tier_id = artifact.get("tier_id")
-        if tier_id not in tier_ids_set:
+        valid_tier_id = _nonempty(tier_id) and tier_id in TIERS
+        if not valid_tier_id:
             errors.append(f"artifact {artifact_id} has unknown tier_id")
-        if artifact.get("audience") not in AUDIENCES:
+        audience = artifact.get("audience")
+        if not _nonempty(audience) or audience not in AUDIENCES:
             errors.append(f"artifact {artifact_id} has invalid audience")
         task_ids = artifact.get("task_ids")
-        if not isinstance(task_ids, list):
-            errors.append(f"artifact {artifact_id} task_ids must be a list")
+        if not isinstance(task_ids, list) or not all(_nonempty(item) for item in task_ids):
+            errors.append(f"artifact {artifact_id} task_ids must be a string list")
+            task_ids = []
+        if valid_tier_id:
+            unknown_tasks = set(task_ids) - allowed_tasks[tier_id]
+            if unknown_tasks:
+                errors.append(f"artifact {artifact_id} has unknown task_ids for tier {tier_id}: {', '.join(sorted(unknown_tasks))}")
+            if audience == "student":
+                student_tiers.add(tier_id)
+                student_tasks[tier_id].update(task_ids)
         path_value = artifact.get("path")
         if not _nonempty(path_value):
             errors.append(f"artifact {artifact_id} requires path")
@@ -152,6 +169,13 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
                 errors.append(f"student ability label in artifact {path_value}")
             if PII_PATTERNS[0].search(content) or PII_PATTERNS[1].search(content):
                 errors.append(f"PII detected in artifact {path_value}")
+
+    for tier_id in sorted(TIERS):
+        if tier_id not in student_tiers:
+            errors.append(f"tier {tier_id} requires at least one student artifact")
+        missing_tasks = required_tasks[tier_id] - student_tasks[tier_id]
+        if missing_tasks:
+            errors.append(f"tier {tier_id} student artifacts missing required task_ids: {', '.join(sorted(missing_tasks))}")
 
     safety = manifest["safety"]
     if not isinstance(safety, dict):

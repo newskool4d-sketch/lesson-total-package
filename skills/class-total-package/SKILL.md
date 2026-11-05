@@ -27,6 +27,7 @@ Read these bundled files only when needed:
 - For the shared anchor block contract, use [references/package-anchor-contract.md](references/package-anchor-contract.md)
 - For package-level IDs, source status, safety gates, and cross-artifact validation, use [references/package-manifest-contract.md](references/package-manifest-contract.md)
 - For template-first composition rules, use [references/template-composition-guide.md](references/template-composition-guide.md)
+- For aligning goals and evidence, responding to formative checks, and planning student retries, use [references/formative-assessment-guide.md](references/formative-assessment-guide.md).
 - For representative invocation examples, use [references/example-prompts.md](references/example-prompts.md)
 - For smoke-test validation scenarios, use [references/validation-scenarios.md](references/validation-scenarios.md)
 - For routing regression checks after skill changes, use [references/routing-smoke-test.md](references/routing-smoke-test.md)
@@ -82,7 +83,7 @@ Typical selectable outputs include lesson overview, board-writing plan, concept 
 3. Infer optional modules that materially improve the lesson flow.
 4. Separate `required modules` from `optional modules`.
 5. When two or more modules are selected, fix the shared anchor block first using [references/package-anchor-contract.md](references/package-anchor-contract.md), show it to the user, then insert the identical block at the top of every module output.
-6. For package-mode work, create or update the internal package manifest before generating module artifacts; run `scripts/validate_package.py` when a manifest and local artifact paths are available.
+6. For package-mode work, create or update the internal package manifest before generating module artifacts. For classroom activity, apply the goal–evidence map, formative response card, and feedback/retry pattern from [references/formative-assessment-guide.md](references/formative-assessment-guide.md) within the selected outputs. Run `scripts/validate_package.py` when a manifest and local artifact paths are available.
 7. Produce only the required outputs unless the user asks for more.
 8. Keep terminology, inquiry question, and activity sequence consistent across all selected modules.
 9. In the response, label which output came from which module when multiple modules are combined.
@@ -136,6 +137,7 @@ Before finishing, confirm all of the following:
 - PBL and assessment outputs include discussion, writing, exploration, AI verification, and source checking
 - terminology is consistent across selected outputs
 - the assessment matches the lesson activity rather than sitting separately
+- for a classroom activity, the core goal has a student-facing success criterion and matching evidence, and the lesson plans how to respond to likely answers and let students retry
 - template packs are used when they fit the request
 - HTML worksheets, when selected, remain source-grounded and pass basic file/path validation
 - package-mode manifests pass the package-level ID, timing, source, privacy, and audience gates when the validator is available

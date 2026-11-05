@@ -1,7 +1,7 @@
 # class-total-package 분석 및 고도화 계획안
 
 > 작성일: 2026-07-06 · 대상: `~/.codex/skills/class-total-package` (SKILL.md + references 10종 + agents/openai.yaml, 총 12파일 약 660줄 전수 검토)
-> 상태: **실행 완료 (2026-07-06)** — Phase 1~3 반영. 잔여: full-package 시나리오 실전 1회 검증(다음 실제 패키지 요청 시)
+> 상태(2026-09-13 확인): **부분 완료·보관** — Phase 1~3 반영(lesson-total-package 사본 추적 a9f234d). 잔여: full-package 시나리오 실행·앵커 블록 diff 0 검증. G8의 CLAUDE.md 행은 2026-09-12 삭제(f849aeb)되어 harness inventory/skill-alignment.md v2 정본표로 대체.
 
 ## 1. 스킬 개요
 

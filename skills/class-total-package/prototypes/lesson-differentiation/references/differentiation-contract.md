@@ -21,6 +21,13 @@
 
 세 tier의 `task_ids`는 `core_task_ids`를 모두 포함해야 한다. 맥락·목표·성취기준을 tier별로 바꾸지 않는다.
 
+## Artifact rules
+
+- `support`, `core`, `extension` 각각에 `audience: student`인 산출물이 최소 1개 있어야 한다. `teacher`·`shared` 산출물은 이를 대신하지 않는다.
+- 모든 산출물의 `tier_id`는 위 세 문자열 중 하나이며, `task_ids`는 비어 있지 않은 문자열로 이루어진 목록이어야 한다.
+- 산출물의 과제 ID는 해당 tier의 `task_ids` 또는 `extension_task_ids`에 선언되어 있어야 한다. 다른 tier에만 선언된 과제는 참조할 수 없다.
+- 각 tier의 학생 산출물 전체가 `core_task_ids`와 해당 tier의 `extension_task_ids`를 모두 포함해야 한다. 과제는 여러 학생 산출물에 나눠 담을 수 있으며, 교사·공유 산출물의 과제는 이 충족 여부에 포함하지 않는다.
+
 ## Admission gates
 
 - 정식 직접 스킬이 독립 경로에 존재한다.

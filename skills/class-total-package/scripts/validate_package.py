@@ -27,14 +27,46 @@ PII_PATTERNS = (
     re.compile(r"(?<!\d)(?:01[016789]|02|0[3-9]\d)[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)"),
     re.compile(r"(?<!\d)\d{6}[-\s.]?[1-4]\d{6}(?!\d)"),
 )
+JSDELIVR_NPM_VERSION = re.compile(
+    r"\bhttps://cdn\.jsdelivr\.net/npm/(?:@[a-z0-9._-]+/)?"
+    r"(?P<package_version>[a-z0-9._-]+@[0-9]+\.[0-9]+\.[0-9]+)(?=/)",
+    re.IGNORECASE,
+)
 
 
 def _is_nonempty(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _as_list(value: Any) -> list[Any]:
-    return value if isinstance(value, list) else []
+def _as_list(value: Any, field: str, errors: list[str]) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    errors.append(f"{field} must be a list")
+    return []
+
+
+def _id_references(value: Any, field: str, errors: list[str]) -> list[str]:
+    if isinstance(value, list) and all(_is_nonempty(item) for item in value):
+        return value
+    errors.append(f"{field} must be a list of non-empty strings")
+    return []
+
+
+def _contains_pii(value: Any) -> bool:
+    if isinstance(value, str):
+        # A pinned npm asset can resemble an email. Exempt only the exact
+        # package version span so other parts of the same URL are still checked.
+        version_spans = {
+            match.span("package_version") for match in JSDELIVR_NPM_VERSION.finditer(value)
+        }
+        if any(match.span() not in version_spans for match in PII_PATTERNS[0].finditer(value)):
+            return True
+        return any(pattern.search(value) for pattern in PII_PATTERNS[1:])
+    if isinstance(value, dict):
+        return any(_contains_pii(key) or _contains_pii(item) for key, item in value.items())
+    if isinstance(value, list):
+        return any(_contains_pii(item) for item in value)
+    return False
 
 
 def _unique_ids(items: list[Any], key: str, label: str, errors: list[str]) -> set[str]:
@@ -51,9 +83,9 @@ def _unique_ids(items: list[Any], key: str, label: str, errors: list[str]) -> se
 
 
 def _validate_paths_and_content(
-    manifest: dict[str, Any], base_dir: Path, errors: list[str]
+    artifacts: list[Any], base_dir: Path, errors: list[str]
 ) -> None:
-    for artifact in _as_list(manifest.get("artifacts")):
+    for artifact in artifacts:
         if not isinstance(artifact, dict):
             continue
         path_value = artifact.get("path")
@@ -73,10 +105,8 @@ def _validate_paths_and_content(
         except UnicodeDecodeError:
             errors.append(f"artifact is not UTF-8 text: {path_value}")
             continue
-        for pattern in PII_PATTERNS:
-            if pattern.search(content):
-                errors.append(f"PII detected in artifact {path_value}")
-                break
+        if _contains_pii(content):
+            errors.append(f"PII detected in artifact {path_value}")
         if artifact.get("audience") == "student":
             if STUDENT_TEACHER_ONLY_TERMS.search(content):
                 errors.append(f"teacher-only content in student artifact {path_value}")
@@ -95,6 +125,8 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest must be a JSON object"]
+    if _contains_pii(manifest):
+        return ["PII detected in manifest"]
 
     required_top_level = {
         "schema_version",
@@ -202,17 +234,17 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
         if not isinstance(values, list) or not values or not all(_is_nonempty(item) for item in values):
             errors.append(f"pedagogy_profile.{field} must be a non-empty string list")
 
-    modules = _as_list(manifest.get("modules"))
+    modules = _as_list(manifest.get("modules"), "modules", errors)
     module_ids = _unique_ids(modules, "module_id", "module", errors)
     active_modules = {
         item.get("module_id")
         for item in modules
-        if isinstance(item, dict) and item.get("active") is True
+        if isinstance(item, dict) and item.get("active") is True and _is_nonempty(item.get("module_id"))
     }
     if not active_modules:
         errors.append("at least one active module is required")
 
-    tasks = _as_list(manifest.get("tasks"))
+    tasks = _as_list(manifest.get("tasks"), "tasks", errors)
     task_ids = _unique_ids(tasks, "task_id", "task", errors)
     total_minutes = 0
     for task in tasks:
@@ -227,7 +259,9 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
         for field in ("phase", "student_action", "evidence"):
             if not _is_nonempty(task.get(field)):
                 errors.append(f"task {task.get('task_id', '<unknown>')} requires {field}")
-        owners = _as_list(task.get("module_owners"))
+        owners = _id_references(
+            task.get("module_owners", []), f"task {task.get('task_id', '<unknown>')} module_owners", errors
+        )
         for owner in owners:
             if owner not in module_ids:
                 errors.append(f"task {task.get('task_id', '<unknown>')} references unknown module {owner}")
@@ -236,7 +270,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     if isinstance(duration, int) and total_minutes != duration:
         errors.append(f"task duration total {total_minutes} does not match context duration {duration}")
 
-    sources = _as_list(manifest.get("sources"))
+    sources = _as_list(manifest.get("sources"), "sources", errors)
     source_ids = _unique_ids(sources, "source_id", "source", errors)
     for source in sources:
         if not isinstance(source, dict):
@@ -255,37 +289,39 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
         if not _is_nonempty(source.get("location")):
             errors.append(f"source {source.get('source_id', '<unknown>')} requires location")
 
-    artifacts = _as_list(manifest.get("artifacts"))
+    artifacts = _as_list(manifest.get("artifacts"), "artifacts", errors)
     artifact_ids = _unique_ids(artifacts, "artifact_id", "artifact", errors)
     referenced_task_ids: set[str] = set()
     for artifact in artifacts:
         if not isinstance(artifact, dict):
             errors.append("artifact must be an object")
             continue
+        artifact_label = f"artifact {artifact.get('artifact_id', '<unknown>')}"
         module_id = artifact.get("module_id")
-        if module_id not in module_ids:
+        if not _is_nonempty(module_id) or module_id not in module_ids:
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} references unknown module {module_id}")
         elif module_id not in active_modules:
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} module {module_id} is not active")
         if artifact.get("audience") not in AUDIENCES:
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} has invalid audience")
-        for task_id in _as_list(artifact.get("task_ids")):
+        for task_id in _id_references(artifact.get("task_ids", []), f"{artifact_label} task_ids", errors):
             if task_id not in task_ids:
                 errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} references unknown task {task_id}")
             referenced_task_ids.add(task_id)
-        for source_id in _as_list(artifact.get("source_ids")):
+        for source_id in _id_references(artifact.get("source_ids", []), f"{artifact_label} source_ids", errors):
             if source_id not in source_ids:
                 errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} references unknown source {source_id}")
     for task_id in sorted(task_ids - referenced_task_ids):
         errors.append(f"task {task_id} is not referenced by any artifact")
 
-    criteria = _as_list(manifest.get("criteria"))
+    criteria = _as_list(manifest.get("criteria"), "criteria", errors)
     _unique_ids(criteria, "criterion_id", "criterion", errors)
     for criterion in criteria:
         if not isinstance(criterion, dict):
             errors.append("criterion must be an object")
             continue
-        for task_id in _as_list(criterion.get("task_ids")):
+        criterion_label = f"criterion {criterion.get('criterion_id', '<unknown>')}"
+        for task_id in _id_references(criterion.get("task_ids", []), f"{criterion_label} task_ids", errors):
             if task_id not in task_ids:
                 errors.append(f"criterion {criterion.get('criterion_id', '<unknown>')} references unknown task {task_id}")
         for field in ("evidence_required", "feedback_use"):
@@ -303,7 +339,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
                 errors.append(f"safety.{field} must be boolean")
 
     if base_dir is not None:
-        _validate_paths_and_content(manifest, Path(base_dir), errors)
+        _validate_paths_and_content(artifacts, Path(base_dir), errors)
     return errors
 
 

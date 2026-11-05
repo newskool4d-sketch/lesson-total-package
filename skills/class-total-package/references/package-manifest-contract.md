@@ -54,6 +54,7 @@
 - `artifact.module_id`는 활성 모듈이어야 한다.
 - `task.module_owners`에는 비활성 모듈을 넣지 않는다.
 - `artifact.source_ids`와 `criterion.task_ids`는 실제 ID만 참조한다.
+- `module_owners`, `task_ids`, `source_ids`를 기재할 때는 비어 있지 않은 문자열을 원소로 하는 배열로 기록한다.
 - 모든 과제 시간의 합은 `context.duration_minutes`와 같아야 한다.
 - 경로는 패키지 루트 상대 경로이며 절대 경로와 `..`를 허용하지 않는다.
 
@@ -68,6 +69,8 @@
 `copyright_status`는 `cleared`, `attribution_required`, `unknown` 중 하나다. `unknown`은 통과시키지 않으며, `attribution_required`에는 `attribution`을 기록한다.
 
 학생 산출물에는 교사용 메모·학생 관찰 기록·정답 및 해설을 넣지 않는다. 이메일·전화번호·주민등록번호 형태의 값은 fixture와 산출물에 넣지 않는다.
+
+검증기는 매니페스트 문자열과 로컬 산출물 본문에서 이메일·전화번호·주민등록번호 형태를 확인한다. 이름, 학번, 상세 진단 등 형태로 판별하기 어려운 정보는 작성·검토 단계에서 제거한다.
 
 ## Learner variability and subject pedagogy
 

@@ -18,3 +18,6 @@
 | 2026-07-30 | 한국형 P/R/O/M/S 24개 루브릭과 fixture 실행기 추가 | `py scripts/run_contract_tests.py` + `py -m unittest discover -s tests -v` | PASS | 루브릭 24개·fixture 2개·전체 unittest 6건 통과 |
 | 2026-07-30 | 학습자 다양성·교과 원리·대상/밀도 계약과 validator 게이트 추가 | `py -m unittest discover -s tests -v` + `py scripts/run_contract_tests.py` | PASS | 비식별 프로필·인지 요구 보존·비낙인 학생자료·교과 일치 검사 통과 |
 | 2026-07-30 | 차별화 수업 직접 스킬 프로토타입·support/core/extension 계약·학생자료 게이트 추가 | `py -m unittest discover -s tests -v` + `py scripts/run_contract_tests.py` + differentiation valid/invalid CLI fixture | PASS | 전체 unittest 13건, 패키지 rubric 24개·fixture 2개, 차별화 정상 0/오류 1 종료 코드 확인. 정식 형제 스킬 편입은 보류 |
+| 2026-11-05 | 매니페스트 개인정보·참조 배열, 차별화 학생 자료·과제 검증 보강 | Windows Python 단위 테스트, 계약 실행기, 두 검증기 정상·오류 CLI fixture | PASS | 23건 통과, 루브릭 24개와 패키지 fixture 2개 통과. 각 CLI의 정상 0·오류 1 확인 |
+| 2026-11-05 | 목표–증거 연결표, 형성평가 대응 카드, 피드백·재도전 칸 반영 | 중학교 과학 판서+마인드맵 수업형 시나리오를 가상 관찰 사례로 독립 수동 재실행 | PASS | 모듈 선택, 목표·증거·준거, 반응별 대응·재확인, 재도전, 간단형 경계, 학생·교사 분리 6항목 확인. 자동 스킬 호출·HTML 렌더링·교실 적용 미검증 |
+| 2026-11-05 | jsDelivr npm 버전 토큰의 이메일 오탐 수정 | 원래 CDN 링크를 포함한 중학교 과학 마인드맵 패키지 CLI, 이메일 차단 회귀 테스트 | PASS | 같은 링크로 수정 전 종료 코드 1, 수정 후 0. HTML 본문·메일 링크·URL 경로와 쿼리 등 6개 입력 사례 차단. 전체 단위 테스트 25건, 루브릭 24개와 패키지 fixture 2개 통과 |
