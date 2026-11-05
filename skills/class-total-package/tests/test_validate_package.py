@@ -6,6 +6,9 @@ from pathlib import Path
 from scripts.validate_package import validate_manifest
 
 
+VERSIONED_ICON_CSS = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+
+
 def make_manifest():
     return {
         "schema_version": "1.0",
@@ -178,6 +181,35 @@ class ValidateManifestTests(unittest.TestCase):
         manifest = make_manifest()
         manifest["learner_profile"]["supports"].append("fixture@example.test")
         self.assertEqual(validate_manifest(manifest), ["PII detected in manifest"])
+
+    def test_versioned_cdn_stylesheet_is_not_treated_as_email(self):
+        manifest = make_manifest()
+        manifest["artifacts"][1]["path"] = "artifacts/student.html"
+        (self.base_dir / "artifacts/student.html").write_text(
+            f'<link rel="stylesheet" href="{VERSIONED_ICON_CSS}">', encoding="utf-8"
+        )
+        self.assertEqual(validate_manifest(manifest, self.base_dir), [])
+
+    def test_versioned_cdn_stylesheet_does_not_hide_emails(self):
+        manifest = make_manifest()
+        manifest["artifacts"][1]["path"] = "artifacts/student.html"
+        stylesheet = f'<link rel="stylesheet" href="{VERSIONED_ICON_CSS}">'
+        address = "student.fixture+demo@example.test"
+        cases = {
+            "visible text": f"{stylesheet}<p>{address}</p>",
+            "mailto": f'{stylesheet}<a href="mailto:{address}">연락처</a>',
+            "same URL query": f'<link rel="stylesheet" href="{VERSIONED_ICON_CSS}?contact={address}">',
+            "same URL path": f'<link rel="stylesheet" href="{VERSIONED_ICON_CSS}/{address}">',
+            "in place of version": f'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/{address}/style.css">',
+            "version-like email in text": f"{stylesheet}<p>fixture@1.2.3</p>",
+        }
+        for context, content in cases.items():
+            with self.subTest(context=context):
+                (self.base_dir / "artifacts/student.html").write_text(content, encoding="utf-8")
+                self.assertEqual(
+                    validate_manifest(manifest, self.base_dir),
+                    ["PII detected in artifact artifacts/student.html"],
+                )
 
     def test_reference_fields_reject_wrong_shapes(self):
         cases = (

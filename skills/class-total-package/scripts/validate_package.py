@@ -27,6 +27,11 @@ PII_PATTERNS = (
     re.compile(r"(?<!\d)(?:01[016789]|02|0[3-9]\d)[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)"),
     re.compile(r"(?<!\d)\d{6}[-\s.]?[1-4]\d{6}(?!\d)"),
 )
+JSDELIVR_NPM_VERSION = re.compile(
+    r"\bhttps://cdn\.jsdelivr\.net/npm/(?:@[a-z0-9._-]+/)?"
+    r"(?P<package_version>[a-z0-9._-]+@[0-9]+\.[0-9]+\.[0-9]+)(?=/)",
+    re.IGNORECASE,
+)
 
 
 def _is_nonempty(value: Any) -> bool:
@@ -49,7 +54,14 @@ def _id_references(value: Any, field: str, errors: list[str]) -> list[str]:
 
 def _contains_pii(value: Any) -> bool:
     if isinstance(value, str):
-        return any(pattern.search(value) for pattern in PII_PATTERNS)
+        # A pinned npm asset can resemble an email. Exempt only the exact
+        # package version span so other parts of the same URL are still checked.
+        version_spans = {
+            match.span("package_version") for match in JSDELIVR_NPM_VERSION.finditer(value)
+        }
+        if any(match.span() not in version_spans for match in PII_PATTERNS[0].finditer(value)):
+            return True
+        return any(pattern.search(value) for pattern in PII_PATTERNS[1:])
     if isinstance(value, dict):
         return any(_contains_pii(key) or _contains_pii(item) for key, item in value.items())
     if isinstance(value, list):
