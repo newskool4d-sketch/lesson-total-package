@@ -94,6 +94,82 @@ class ValidateDifferentiationTests(unittest.TestCase):
         errors = validate_differentiation(manifest, self.base_dir)
         self.assertTrue(any("ability label" in error for error in errors))
 
+    def test_every_tier_requires_a_student_artifact(self):
+        for tier_id in ("support", "core", "extension"):
+            with self.subTest(tier_id=tier_id):
+                manifest = make_manifest()
+                manifest["artifacts"] = [artifact for artifact in manifest["artifacts"] if artifact["tier_id"] != tier_id]
+                errors = validate_differentiation(manifest, self.base_dir)
+                self.assertIn(f"tier {tier_id} requires at least one student artifact", errors)
+
+    def test_teacher_and_shared_artifacts_do_not_replace_student_artifacts(self):
+        for audience in ("teacher", "shared"):
+            with self.subTest(audience=audience):
+                manifest = make_manifest()
+                manifest["artifacts"][0]["audience"] = audience
+                errors = validate_differentiation(manifest, self.base_dir)
+                self.assertIn("tier support requires at least one student artifact", errors)
+                self.assertTrue(any("tier support student artifacts missing required task_ids" in error for error in errors))
+
+    def test_student_artifacts_must_cover_core_tasks(self):
+        for index in range(3):
+            for task_ids in ([], ["task-observe"]):
+                with self.subTest(tier=index, task_ids=task_ids):
+                    manifest = make_manifest()
+                    artifact = manifest["artifacts"][index]
+                    artifact["task_ids"] = task_ids
+                    errors = validate_differentiation(manifest, self.base_dir)
+                    self.assertTrue(any(f"tier {artifact['tier_id']} student artifacts missing required task_ids" in error and "task-exit" in error for error in errors))
+
+    def test_student_artifacts_must_cover_extension_tasks(self):
+        manifest = make_manifest()
+        manifest["artifacts"][2]["task_ids"] = ["task-observe", "task-exit"]
+        errors = validate_differentiation(manifest, self.base_dir)
+        self.assertIn("tier extension student artifacts missing required task_ids: task-transfer", errors)
+
+    def test_student_task_coverage_can_span_multiple_artifacts(self):
+        manifest = make_manifest()
+        manifest["artifacts"][2]["task_ids"] = ["task-observe", "task-exit"]
+        manifest["artifacts"].append({
+            "artifact_id": "extension-transfer-sheet",
+            "tier_id": "extension",
+            "audience": "student",
+            "path": "artifacts/extension-transfer.md",
+            "task_ids": ["task-transfer"],
+        })
+        (self.base_dir / "artifacts/extension-transfer.md").write_text("학생 확장 활동지", encoding="utf-8")
+        self.assertEqual(validate_differentiation(manifest, self.base_dir), [])
+        for audience in ("teacher", "shared"):
+            with self.subTest(audience=audience):
+                manifest["artifacts"][-1]["audience"] = audience
+                errors = validate_differentiation(manifest, self.base_dir)
+                self.assertIn("tier extension student artifacts missing required task_ids: task-transfer", errors)
+
+    def test_artifact_tasks_must_belong_to_their_tier(self):
+        for task_id in ("unknown-task", "task-transfer"):
+            for audience in ("student", "teacher", "shared"):
+                with self.subTest(task_id=task_id, audience=audience):
+                    manifest = make_manifest()
+                    manifest["artifacts"][0]["task_ids"].append(task_id)
+                    manifest["artifacts"][0]["audience"] = audience
+                    errors = validate_differentiation(manifest, self.base_dir)
+                    self.assertIn(f"artifact support-sheet has unknown task_ids for tier support: {task_id}", errors)
+
+    def test_invalid_tier_and_task_id_types_return_errors(self):
+        for value in (None, {}, [], 7, ""):
+            for collection in ("tiers", "artifacts"):
+                with self.subTest(field="tier_id", collection=collection, value=value):
+                    manifest = make_manifest()
+                    manifest[collection][0]["tier_id"] = value
+                    self.assertTrue(validate_differentiation(manifest, self.base_dir))
+        for value in (None, {}, "task-observe", [None], [{}], [[]], [7], [""]):
+            for collection, field in (("tiers", "task_ids"), ("tiers", "extension_task_ids"), ("artifacts", "task_ids")):
+                with self.subTest(field=field, collection=collection, value=value):
+                    manifest = make_manifest()
+                    manifest[collection][0][field] = value
+                    errors = validate_differentiation(manifest, self.base_dir)
+                    self.assertTrue(any(f"{field} must be a string list" in error for error in errors))
+
     def test_repository_fixtures_match_expected_outcomes(self):
         fixture_dir = Path(__file__).parents[1] / "evals" / "fixtures"
         for name, expected_empty in (("differentiation.valid.json", True), ("differentiation.invalid.json", False)):

@@ -174,6 +174,33 @@ class ValidateManifestTests(unittest.TestCase):
         self.assertTrue(any("PII" in error for error in errors))
         self.assertTrue(any("attribution" in error for error in errors))
 
+    def test_manifest_pii_is_rejected_without_echoing_the_value(self):
+        manifest = make_manifest()
+        manifest["learner_profile"]["supports"].append("fixture@example.test")
+        self.assertEqual(validate_manifest(manifest), ["PII detected in manifest"])
+
+    def test_reference_fields_reject_wrong_shapes(self):
+        cases = (
+            ("tasks", "module_owners", "pbl-lesson-designer"),
+            ("artifacts", "source_ids", "missing-source"),
+            ("artifacts", "task_ids", [["task-observe"]]),
+            ("criteria", "task_ids", None),
+        )
+        for section, field, value in cases:
+            with self.subTest(section=section, field=field):
+                manifest = make_manifest()
+                manifest[section][0][field] = value
+                errors = validate_manifest(manifest, self.base_dir)
+                self.assertTrue(
+                    any(f"{field} must be a list of non-empty strings" in error for error in errors),
+                    errors,
+                )
+
+    def test_top_level_array_rejects_wrong_shape(self):
+        manifest = make_manifest()
+        manifest["criteria"] = {}
+        self.assertIn("criteria must be a list", validate_manifest(manifest, self.base_dir))
+
     def test_learner_profile_and_subject_pedagogy_contract_are_required(self):
         manifest = make_manifest()
         manifest.pop("learner_profile")

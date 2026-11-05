@@ -55,3 +55,6 @@ Use this note as a smoke-test example for `class-total-package`.
 - output remains classroom-ready, not document-heavy
 - visual mode stays within `수업형` breadth
 - this scenario is not expanded into a four-module package
+- the teacher flow memo maps the shared goal to a student success criterion, an observable task, and a judgment criterion
+- the teacher uses a formative question with a response and recheck for likely answers
+- the board or mind-map activity gives students a chance to revise an explanation using the same success criterion
