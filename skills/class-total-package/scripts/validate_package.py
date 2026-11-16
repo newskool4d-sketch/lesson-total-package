@@ -14,6 +14,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from .validation_common import (
+        ValidationInputError, contains_pii as _contains_pii, manifest_safety_errors,
+        read_artifact, read_utf8_bounded, safety_views,
+    )
+else:  # direct CLI invocation
+    from validation_common import (
+        ValidationInputError, contains_pii as _contains_pii, manifest_safety_errors,
+        read_artifact, read_utf8_bounded, safety_views,
+    )
+
 
 OUTPUT_MODES = {"간단형", "수업형", "패키지형"}
 STATUSES = {"verified", "user-provided", "pending"}
@@ -22,16 +33,6 @@ COPYRIGHT_STATUSES = {"cleared", "attribution_required", "unknown"}
 AUDIENCES = {"teacher", "student", "shared"}
 STUDENT_TEACHER_ONLY_TERMS = re.compile(r"교사용|교사 메모|학생 관찰 기록|정답 및 해설")
 STUDENT_ABILITY_LABELS = re.compile(r"하위 수준|낮은 수준|보충반|기초반|상위 수준|심화반|Below|Above|Group A|Group C")
-PII_PATTERNS = (
-    re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
-    re.compile(r"(?<!\d)(?:01[016789]|02|0[3-9]\d)[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)"),
-    re.compile(r"(?<!\d)\d{6}[-\s.]?[1-4]\d{6}(?!\d)"),
-)
-JSDELIVR_NPM_VERSION = re.compile(
-    r"\bhttps://cdn\.jsdelivr\.net/npm/(?:@[a-z0-9._-]+/)?"
-    r"(?P<package_version>[a-z0-9._-]+@[0-9]+\.[0-9]+\.[0-9]+)(?=/)",
-    re.IGNORECASE,
-)
 
 
 def _is_nonempty(value: Any) -> bool:
@@ -50,23 +51,6 @@ def _id_references(value: Any, field: str, errors: list[str]) -> list[str]:
         return value
     errors.append(f"{field} must be a list of non-empty strings")
     return []
-
-
-def _contains_pii(value: Any) -> bool:
-    if isinstance(value, str):
-        # A pinned npm asset can resemble an email. Exempt only the exact
-        # package version span so other parts of the same URL are still checked.
-        version_spans = {
-            match.span("package_version") for match in JSDELIVR_NPM_VERSION.finditer(value)
-        }
-        if any(match.span() not in version_spans for match in PII_PATTERNS[0].finditer(value)):
-            return True
-        return any(pattern.search(value) for pattern in PII_PATTERNS[1:])
-    if isinstance(value, dict):
-        return any(_contains_pii(key) or _contains_pii(item) for key, item in value.items())
-    if isinstance(value, list):
-        return any(_contains_pii(item) for item in value)
-    return False
 
 
 def _unique_ids(items: list[Any], key: str, label: str, errors: list[str]) -> set[str]:
@@ -92,25 +76,19 @@ def _validate_paths_and_content(
         if not _is_nonempty(path_value):
             errors.append("artifact requires path")
             continue
-        path = Path(path_value)
-        if path.is_absolute() or ".." in path.parts:
-            errors.append(f"artifact path escapes package root: {path_value}")
-            continue
-        resolved = base_dir / path
-        if not resolved.is_file():
-            errors.append(f"artifact file not found: {path_value}")
-            continue
         try:
-            content = resolved.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            errors.append(f"artifact is not UTF-8 text: {path_value}")
+            content = read_artifact(path_value, base_dir)
+            has_pii = _contains_pii(content)
+            views = safety_views(content)
+        except ValidationInputError as exc:
+            errors.append(str(exc))
             continue
-        if _contains_pii(content):
+        if has_pii:
             errors.append(f"PII detected in artifact {path_value}")
         if artifact.get("audience") == "student":
-            if STUDENT_TEACHER_ONLY_TERMS.search(content):
+            if any(STUDENT_TEACHER_ONLY_TERMS.search(view) for view in views):
                 errors.append(f"teacher-only content in student artifact {path_value}")
-            if STUDENT_ABILITY_LABELS.search(content):
+            if any(STUDENT_ABILITY_LABELS.search(view) for view in views):
                 errors.append(f"student ability label in student artifact {path_value}")
 
 
@@ -125,8 +103,9 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest must be a JSON object"]
-    if _contains_pii(manifest):
-        return ["PII detected in manifest"]
+    safety_errors = manifest_safety_errors(manifest)
+    if safety_errors:
+        return safety_errors
 
     required_top_level = {
         "schema_version",
@@ -153,7 +132,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
         errors.append("schema_version must be non-empty")
     if not _is_nonempty(manifest.get("package_id")):
         errors.append("package_id must be non-empty")
-    if manifest.get("output_mode") not in OUTPUT_MODES:
+    if not isinstance(manifest.get("output_mode"), str) or manifest["output_mode"] not in OUTPUT_MODES:
         errors.append(f"output_mode must be one of {sorted(OUTPUT_MODES)}")
 
     context = manifest.get("context")
@@ -172,13 +151,13 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
         errors.append("standard must be an object")
         standard = {}
     status = standard.get("status")
-    if status not in STATUSES:
+    if not isinstance(status, str) or status not in STATUSES:
         errors.append(f"standard.status must be one of {sorted(STATUSES)}")
     if status == "verified":
         for field in ("code", "text", "source"):
             if not _is_nonempty(standard.get(field)):
                 errors.append(f"verified standard requires {field}")
-    elif status in {"pending", "user-provided"}:
+    elif isinstance(status, str) and status in {"pending", "user-provided"}:
         marker = f"{standard.get('code', '')} {standard.get('text', '')}".lower()
         if status == "pending" and "확인 필요" not in marker and not standard.get("confirmation_required"):
             errors.append("standard confirmation required for pending status")
@@ -206,7 +185,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     if not isinstance(learner_profile, dict):
         errors.append("learner_profile must be an object")
         learner_profile = {}
-    if learner_profile.get("mode") not in {"default", "provided"}:
+    if not isinstance(learner_profile.get("mode"), str) or learner_profile["mode"] not in {"default", "provided"}:
         errors.append("learner_profile.mode must be default or provided")
     for field in ("reading_access", "grouping_basis", "regrouping_rule"):
         if not _is_nonempty(learner_profile.get(field)):
@@ -236,6 +215,9 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
 
     modules = _as_list(manifest.get("modules"), "modules", errors)
     module_ids = _unique_ids(modules, "module_id", "module", errors)
+    for module in modules:
+        if isinstance(module, dict) and not isinstance(module.get("required", False), bool):
+            errors.append("module.required must be boolean")
     active_modules = {
         item.get("module_id")
         for item in modules
@@ -243,6 +225,12 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     }
     if not active_modules:
         errors.append("at least one active module is required")
+    required_modules = {
+        item["module_id"] for item in modules
+        if isinstance(item, dict) and item.get("required") is True and _is_nonempty(item.get("module_id"))
+    }
+    for module_id in sorted(required_modules - active_modules):
+        errors.append(f"required module {module_id} must be active")
 
     tasks = _as_list(manifest.get("tasks"), "tasks", errors)
     task_ids = _unique_ids(tasks, "task_id", "task", errors)
@@ -278,9 +266,9 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
             continue
         verification = source.get("verification_status")
         copyright_status = source.get("copyright_status")
-        if verification not in SOURCE_VERIFICATION_STATUSES:
+        if not isinstance(verification, str) or verification not in SOURCE_VERIFICATION_STATUSES:
             errors.append(f"source {source.get('source_id', '<unknown>')} has invalid verification_status")
-        if copyright_status not in COPYRIGHT_STATUSES:
+        if not isinstance(copyright_status, str) or copyright_status not in COPYRIGHT_STATUSES:
             errors.append(f"source {source.get('source_id', '<unknown>')} has invalid copyright_status")
         if copyright_status == "unknown":
             errors.append(f"source {source.get('source_id', '<unknown>')} copyright status unknown")
@@ -292,6 +280,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
     artifacts = _as_list(manifest.get("artifacts"), "artifacts", errors)
     artifact_ids = _unique_ids(artifacts, "artifact_id", "artifact", errors)
     referenced_task_ids: set[str] = set()
+    artifact_modules: set[str] = set()
     for artifact in artifacts:
         if not isinstance(artifact, dict):
             errors.append("artifact must be an object")
@@ -302,7 +291,9 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} references unknown module {module_id}")
         elif module_id not in active_modules:
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} module {module_id} is not active")
-        if artifact.get("audience") not in AUDIENCES:
+        else:
+            artifact_modules.add(module_id)
+        if not isinstance(artifact.get("audience"), str) or artifact["audience"] not in AUDIENCES:
             errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} has invalid audience")
         for task_id in _id_references(artifact.get("task_ids", []), f"{artifact_label} task_ids", errors):
             if task_id not in task_ids:
@@ -313,6 +304,8 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
                 errors.append(f"artifact {artifact.get('artifact_id', '<unknown>')} references unknown source {source_id}")
     for task_id in sorted(task_ids - referenced_task_ids):
         errors.append(f"task {task_id} is not referenced by any artifact")
+    for module_id in sorted(required_modules - artifact_modules):
+        errors.append(f"required module {module_id} requires at least one artifact")
 
     criteria = _as_list(manifest.get("criteria"), "criteria", errors)
     _unique_ids(criteria, "criterion_id", "criterion", errors)
@@ -345,7 +338,7 @@ def validate_manifest(manifest: dict[str, Any], base_dir: Path | str | None = No
 
 def _load_manifest(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(read_utf8_bounded(path))
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid JSON at {path}: {exc}") from exc
 
@@ -357,7 +350,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         manifest = _load_manifest(args.manifest)
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
         print(f"FAIL: {exc}")
         return 1
     base_dir = args.base_dir or args.manifest.parent

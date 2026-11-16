@@ -9,14 +9,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from .validation_common import (
+        ValidationInputError, contains_pii, manifest_safety_errors,
+        read_artifact, read_utf8_bounded, safety_views,
+    )
+else:  # direct CLI invocation
+    from validation_common import (
+        ValidationInputError, contains_pii, manifest_safety_errors,
+        read_artifact, read_utf8_bounded, safety_views,
+    )
+
 
 TIERS = {"support", "core", "extension"}
 AUDIENCES = {"teacher", "student", "shared"}
 ABILITY_LABELS = re.compile(r"하위 수준|낮은 수준|보충반|기초반|상위 수준|심화반|Below|Above|Group A|Group C")
-PII_PATTERNS = (
-    re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
-    re.compile(r"(?<!\d)(?:01[016789]|02|0[3-9]\d)[-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)"),
-)
 
 
 def _nonempty(value: Any) -> bool:
@@ -27,6 +34,9 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest must be a JSON object"]
+    safety_errors = manifest_safety_errors(manifest)
+    if safety_errors:
+        return safety_errors
     required = {
         "schema_version",
         "differentiation_id",
@@ -54,7 +64,7 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
     standard = manifest["standard"]
     if not isinstance(standard, dict):
         errors.append("standard must be an object")
-    elif standard.get("status") not in {"verified", "user-provided", "pending"}:
+    elif not isinstance(standard.get("status"), str) or standard["status"] not in {"verified", "user-provided", "pending"}:
         errors.append("standard.status must be verified, user-provided, or pending")
 
     core_task_ids = manifest["core_task_ids"]
@@ -152,22 +162,16 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
             errors.append(f"artifact {artifact_id} requires path")
             continue
         if base_dir is not None:
-            path = Path(path_value)
-            if path.is_absolute() or ".." in path.parts:
-                errors.append(f"artifact path escapes package root: {path_value}")
-                continue
-            resolved = Path(base_dir) / path
-            if not resolved.is_file():
-                errors.append(f"artifact file not found: {path_value}")
-                continue
             try:
-                content = resolved.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                errors.append(f"artifact is not UTF-8 text: {path_value}")
+                content = read_artifact(path_value, base_dir)
+                has_pii = contains_pii(content)
+                views = safety_views(content)
+            except ValidationInputError as exc:
+                errors.append(str(exc))
                 continue
-            if artifact.get("audience") == "student" and ABILITY_LABELS.search(content):
+            if artifact.get("audience") == "student" and any(ABILITY_LABELS.search(view) for view in views):
                 errors.append(f"student ability label in artifact {path_value}")
-            if PII_PATTERNS[0].search(content) or PII_PATTERNS[1].search(content):
+            if has_pii:
                 errors.append(f"PII detected in artifact {path_value}")
 
     for tier_id in sorted(TIERS):
@@ -194,8 +198,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-dir", type=Path)
     args = parser.parse_args(argv)
     try:
-        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        manifest = json.loads(read_utf8_bounded(args.manifest))
+    except (OSError, ValueError, RecursionError) as exc:
         print(f"FAIL: {exc}")
         return 1
     errors = validate_differentiation(manifest, args.base_dir or args.manifest.parent)
