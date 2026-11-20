@@ -14,6 +14,17 @@ MAX_MANIFEST_CHARS = 8 * 1024 * 1024
 MAX_MANIFEST_NODES = 100_000
 MAX_MANIFEST_DEPTH = 64
 
+TEACHER_MARKERS = re.compile(r"교사용|교사[ \t]*(?:전용|메모|관찰[ \t]*(?:기록|메모))")
+# Match answer-key/observation section labels; ordinary prompts such as
+# "정답을 쓰세요" and a student's own observation log are valid activities.
+TEACHER_SECTION = re.compile(
+    r"(?:^|[\n\x00])[ \t#>*\[\-]*"
+    r"(?:정답(?:[ \t]*(?:및|[·ㆍ/])[ \t]*해설|[ \t]+해설)?|해설|(?:모범|예시)[ \t]*답안"
+    r"|학생[ \t]*관찰[ \t]*(?:기록|메모))"
+    r"[ \t*\]]*(?=[\r\n\x00]|$|[:：][ \t]*[^\s_\x00])"
+)
+ABILITY_LABELS = re.compile(r"하위 수준|낮은 수준|보충반|기초반|상위 수준|심화반|Below|Above|Group A|Group C")
+
 # Each run is consumed once. Adjacent runs around an @ are inspected at most
 # twice, avoiding a new unbounded email search at every word boundary.
 EMAIL_PART = re.compile(r"[\w.+-]+")
@@ -111,6 +122,18 @@ def safety_views(text: str) -> tuple[str, ...]:
     return tuple(views)
 
 
+def audience_content_errors(audience: object, views: tuple[str, ...], path_value: str) -> list[str]:
+    """Apply the same content rules to every artifact distributed to students."""
+    if audience not in ("student", "shared"):
+        return []
+    errors = []
+    if any(TEACHER_MARKERS.search(view) or TEACHER_SECTION.search(view) for view in views):
+        errors.append(f"teacher-only content in {audience} artifact {path_value}")
+    if any(ABILITY_LABELS.search(view) for view in views):
+        errors.append(f"student ability label in {audience} artifact {path_value}")
+    return errors
+
+
 def contains_pii(value: Any) -> bool:
     """Check JSON keys/values without recursion or echoing sensitive values."""
     pending = [(value, 0)]
@@ -153,19 +176,29 @@ def read_utf8_bounded(path: Path) -> str:
     return data.decode("utf-8")
 
 
-def read_artifact(path_value: str, base_dir: Path | str) -> str:
-    """Reject alternate Windows roots and resolved links outside the package."""
+def resolve_package_file(path_value: str, base_dir: Path | str, *, label: str = "artifact") -> Path:
+    """Return an existing package file after checking lexical and resolved paths."""
     path = Path(path_value)
     windows_path = PureWindowsPath(path_value)
     if path.anchor or windows_path.drive or windows_path.root or ".." in path.parts or ".." in windows_path.parts:
-        raise ValidationInputError(f"artifact path escapes package root: {path_value}")
+        raise ValidationInputError(f"{label} path escapes package root: {path_value}")
     try:
         root = Path(base_dir).resolve()
         resolved = (root / path).resolve()
         if not resolved.is_relative_to(root):
-            raise ValidationInputError(f"artifact path escapes package root: {path_value}")
+            raise ValidationInputError(f"{label} path escapes package root: {path_value}")
         if not resolved.is_file():
-            raise ValidationInputError(f"artifact file not found: {path_value}")
+            raise ValidationInputError(f"{label} file not found: {path_value}")
+        return resolved
+    except ValidationInputError:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise ValidationInputError(f"{label} cannot be read: {path_value}") from exc
+
+
+def read_artifact(path_value: str, base_dir: Path | str) -> str:
+    resolved = resolve_package_file(path_value, base_dir)
+    try:
         return read_utf8_bounded(resolved)
     except UnicodeDecodeError as exc:
         raise ValidationInputError(f"artifact is not UTF-8 text: {path_value}") from exc

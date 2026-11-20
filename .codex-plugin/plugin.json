@@ -1,7 +1,7 @@
 {
   "name": "lesson-total-package",
   "version": "0.1.0",
-  "description": "Selectable teaching package plugin that bundles lesson planning modules for board-writing, mind maps, PBL, and inquiry-report assessment.",
+  "description": "Connect separately installed lesson skills for board-writing, mind maps, printable HTML worksheets, PBL, and inquiry-report assessment.",
   "author": {
     "name": "Hong Ju-hyung",
     "email": "newskool4d@gmail.com",
@@ -16,13 +16,14 @@
     "pbl",
     "assessment",
     "mindmap",
-    "board-writing"
+    "board-writing",
+    "html-worksheet"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Lesson Total Package",
-    "shortDescription": "Selectable package for board-writing, mind map, PBL, and assessment",
-    "longDescription": "Build Korean lesson packages by selectively combining board-writing, mind map, PBL, and inquiry-report assessment modules instead of forcing a fixed bundle.",
+    "shortDescription": "Link board-writing, mind maps, HTML worksheets, PBL, and assessment",
+    "longDescription": "Build Korean lesson packages with five separately installed skills. Select the modules needed for the lesson, check their installation, and generate their classroom materials.",
     "developerName": "Hong Ju-hyung",
     "category": "Education",
     "capabilities": [
@@ -35,7 +36,7 @@
     "defaultPrompt": [
       "Bundle only board-writing and mind map for this lesson.",
       "Design PBL and inquiry-report assessment together.",
-      "Connect board-writing, mind map, PBL, and assessment."
+      "Connect board-writing, mind map, HTML worksheets, PBL, and assessment."
     ],
     "brandColor": "#2F6B5F"
   }

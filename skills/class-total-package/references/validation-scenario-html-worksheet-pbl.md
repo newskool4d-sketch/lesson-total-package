@@ -49,7 +49,7 @@ Use this note as a smoke-test example for `class-total-package`.
 1. package overview
 2. PBL overview
 3. phase plan
-4. source-grounded HTML worksheet plan or generated worksheet contract
+4. a generated, source-grounded student worksheet (`.html`) used in the project
 5. source evidence activity
 6. AI and source verification log
 7. teacher connection memo
@@ -61,5 +61,7 @@ Use this note as a smoke-test example for `class-total-package`.
 - worksheet sections support the PBL exploration sequence
 - PDF facts, visuals, tables, maps, or diagrams are used only when visible in the source
 - PBL outputs include AI verification and source-checking expectations
-- worksheet expectations include print controls and basic file/path validation when an HTML file is generated
+- the worksheet opens, passes the worksheet skill's `scripts/verify_html_worksheet.py`, and prints with the project evidence fields visible
 - final project artifact grows from the source evidence gathered in the worksheet
+
+For an explicit outline-only request, set `deliverable_stage: design` and report the design separately from the generated-package scenario.

@@ -9,6 +9,7 @@ Use this file to check whether `class-total-package` routes correctly as a bundl
 - 교과서 PDF 학습지와 PBL을 묶어서 수업 패키지로 만들어 줘.
 - PBL과 수행평가를 묶어서 하나의 수업형 패키지로 만들어 줘.
 - 전체 수업팩으로 판서, 마인드맵, HTML 학습지, PBL, 수행평가까지 연결해 줘.
+- 모듈을 정하지 않았어. 중학교 과학 개념을 한눈에 볼 수 있는 수업 패키지를 만들어 줘. → 판서와 마인드맵 두 개를 추론한다.
 
 ## Must not trigger this skill
 
@@ -17,6 +18,7 @@ Use this file to check whether `class-total-package` routes correctly as a bundl
 - HTML 마인드맵만 만들어 줘.
 - PBL 수업안만 설계해 줘.
 - 탐구 보고서 수행평가만 만들어 줘.
+- 고등학생용 탐구 보고서 수행평가만 필요해. 과제지와 기준표를 패키지로 줘. → 직접 수행평가 스킬에 두 산출물을 전달한다.
 
 ## Adjacent skills
 
@@ -40,7 +42,7 @@ Use this file to check whether `class-total-package` routes correctly as a bundl
 ## Failure signals
 
 - 단일 모듈 요청이 패키지 스킬로 먼저 잡힌다.
-- 필요한 모듈이 둘뿐인데 네 모듈 전체 패키지로 과확장된다.
+- 필요한 모듈이 둘뿐인데 다섯 모듈 전체 패키지로 과확장된다.
 - 공통 목표나 핵심 질문 없이 결과물만 나열된다.
 - HTML 학습지가 선택됐는데 source-grounded 검증 기준이 빠진다.
 - inactive module output이 섞여 나온다.

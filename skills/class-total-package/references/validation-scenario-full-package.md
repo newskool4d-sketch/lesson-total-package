@@ -54,7 +54,7 @@ Use this note as a smoke-test example for `class-total-package`.
 3. common lesson flow
 4. board-writing plan
 5. mind map structure
-6. PDF-grounded HTML worksheet plan or generated worksheet contract
+6. a generated PDF-grounded HTML worksheet (`.html`) that students can open and print
 7. PBL overview and phase plan
 8. inquiry-report task sheet and rubric
 9. AI verification record
@@ -64,7 +64,7 @@ Use this note as a smoke-test example for `class-total-package`.
 
 - all five outputs read as one package, not five isolated documents
 - selected assessment template matches school level and subject
-- HTML worksheet expectations include source grounding, print controls, and basic file/path validation
+- the HTML worksheet opens, passes the worksheet skill's `scripts/verify_html_worksheet.py`, and prints with source references and response fields visible
 - board, mind map, HTML worksheet, PBL, and assessment share the same terminology
 - teacher memo explicitly explains how outputs connect in class
 - this scenario is not downgraded into separate direct-skill outputs

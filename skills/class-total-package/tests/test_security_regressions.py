@@ -15,7 +15,7 @@ from scripts.validation_common import (
     MAX_FILE_BYTES, MAX_MANIFEST_CHARS, MAX_MANIFEST_NODES, contains_pii,
 )
 from tests.test_validate_differentiation import make_manifest as differentiation_manifest
-from tests.test_validate_package import make_manifest as package_manifest
+from tests.test_validate_package import FIXTURES, copy_package_fixtures, make_manifest as package_manifest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +36,7 @@ class SecurityRegressionTests(unittest.TestCase):
                 path = self.base / artifact["path"]
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("학생 활동 자료", encoding="utf-8")
+        copy_package_fixtures(self.base)
 
     def cli(self, manifest, script):
         path = self.base / "manifest.json"
@@ -233,7 +234,9 @@ class SecurityRegressionTests(unittest.TestCase):
                     manifest = factory()
                     path = self.base / manifest["artifacts"][0]["path"]
                     manifest["extra"] = url
-                    path.write_text(f'<link href="{url}">', encoding="utf-8")
+                    relative = manifest["artifacts"][0]["path"]
+                    body = (FIXTURES / relative).read_text(encoding="utf-8") if name == "package" else ""
+                    path.write_text(body + f'\n<link href="{url}">', encoding="utf-8")
                     self.assertEqual(validate(manifest, self.base), [])
                     for tail in ("?contact=fixture@example.invalid", "/fixture@example.invalid"):
                         path.write_text(f'<link href="{url}{tail}">', encoding="utf-8")
@@ -251,7 +254,9 @@ class SecurityRegressionTests(unittest.TestCase):
             for content in contents:
                 with self.subTest(validator=name, content=content):
                     manifest = factory()
-                    (self.base / manifest["artifacts"][0]["path"]).write_text(content, encoding="utf-8")
+                    relative = manifest["artifacts"][0]["path"]
+                    body = (FIXTURES / relative).read_text(encoding="utf-8") if name == "package" else ""
+                    (self.base / relative).write_text(body + "\n" + content, encoding="utf-8")
                     self.assertEqual(validate(manifest, self.base), [])
 
     def test_manifest_limits_fail_explicitly_instead_of_skipping_checks(self):

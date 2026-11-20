@@ -1,6 +1,6 @@
 ---
 name: class-total-package
-description: Assemble Korean lesson packages by routing to board-writing, mind map, worksheet, PBL, or assessment modules as needed.
+description: Link two or more Korean lesson modules such as 판서, 마인드맵, HTML 학습지, PBL, and 수행평가. Choose the smallest useful combination for an unnamed lesson package. Route single-module requests to the direct skill.
 metadata:
   short-description: 선택형 수업 모듈 패키지를 연결 설계하는 번들 스킬
 ---
@@ -38,8 +38,9 @@ Read these bundled files only when needed:
 
 - Do not assume every module must be used.
 - Let the user's request determine which modules are required now.
-- If the user does not specify modules, infer a sensible minimal set and state the assumption.
-- Keep single-module requests out of this bundle unless the user explicitly asks for a package structure.
+- A single named module goes directly to its skill, even if the user calls its handouts a “패키지”. Preserve the requested output format in the handoff.
+- When the user requests a package without naming modules, infer the smallest combination that meets the lesson goal and explain the selection. For a concept-visualization lesson, board-writing and a mind map are sufficient.
+- An explicit request for all modules selects all five. If the user lists a narrower set, use their list.
 
 ## Current module set
 
@@ -52,7 +53,7 @@ Read these bundled files only when needed:
 ## Selection and template rules
 
 - Treat every module as optional by default.
-- Activate only the modules the user explicitly requests or clearly approves.
+- When the user names modules, activate exactly those modules. For an unnamed package use the inferred selection above.
 - Present non-selected modules only as optional suggestions.
 - Prefer linked module template packs when they fit the request.
 - For detailed selection, handoff, and AI-literacy rules, read [references/package-rules.md](references/package-rules.md).
@@ -70,6 +71,19 @@ Use the module names explicitly in planning and execution.
 
 If the user asks for a package without naming modules, infer the minimal useful module set from [references/package-rules.md](references/package-rules.md).
 
+### Check the selected skills
+
+Use the Python interpreter available on the host. Run the following from the directory containing this `SKILL.md`, or pass the script's absolute path. Supply the module IDs identified from the request.
+
+```text
+python scripts/check_module_dependencies.py inquiry-report-assessment
+python scripts/check_module_dependencies.py board-writing-generator html-worksheet-generator
+python scripts/check_module_dependencies.py --infer board-writing-generator mindmap-html-generator
+python scripts/check_module_dependencies.py --full-package
+```
+
+The first command checks a direct handoff. The third checks a pair inferred for an unnamed concept-visualization package. The last checks all five. The script searches sibling skills and the user's skills directories. If a module is registered elsewhere, supply its trusted parent directory with `--skills-root`; repeat the option for multiple roots. Read each selected module's resolved `SKILL.md` and use its templates and tools. On `MISSING`, tell the user which module or asset is required and how to install it or select the correct root. Continue independent work on available modules and identify the incomplete outputs.
+
 ## Package logic
 
 Treat the package as a selectable set of lesson components, not a fixed production line.
@@ -83,12 +97,13 @@ Typical selectable outputs include lesson overview, board-writing plan, concept 
 3. Infer optional modules that materially improve the lesson flow.
 4. Separate `required modules` from `optional modules`.
 5. When two or more modules are selected, fix the shared anchor block first using [references/package-anchor-contract.md](references/package-anchor-contract.md), show it to the user, then insert the identical block at the top of every module output.
-6. For package-mode work, create or update the internal package manifest before generating module artifacts. For classroom activity, apply the goal–evidence map, formative response card, and feedback/retry pattern from [references/formative-assessment-guide.md](references/formative-assessment-guide.md) within the selected outputs. Run `scripts/validate_package.py` when a manifest and local artifact paths are available.
+6. For a multi-module package, create or update the internal manifest. Use `deliverable_stage: generated` by default for all three output modes. Use `deliverable_stage: design` only when the user expressly asks for a proposal, outline, or design document alone. A request for “수업 설계” can still require ready-to-use classroom files. For classroom activity, apply the goal–evidence map, formative response card, and feedback/retry pattern from [references/formative-assessment-guide.md](references/formative-assessment-guide.md) within the selected outputs.
 7. Produce only the required outputs unless the user asks for more.
 8. Keep terminology, inquiry question, and activity sequence consistent across all selected modules.
 9. In the response, label which output came from which module when multiple modules are combined.
 10. Prefer template-based outputs when the selected modules already provide reusable packs.
 11. Keep all non-selected modules inactive.
+12. For generation, open the required files and apply each module's own checks. For a selected HTML worksheet, produce an actual `.html` file, run the resolved worksheet skill's `scripts/verify_html_worksheet.py <worksheet.html>`, and review print layout and student/teacher content. Record its result. For a mind map, open the generated HTML and verify its content and interactions. Run `python scripts/validate_package.py <manifest>` on the generated package. For an explicit design-only request, run `python scripts/validate_package.py <manifest> --stage design` and identify the output as a design.
 
 ## PBL and assessment core requirements
 

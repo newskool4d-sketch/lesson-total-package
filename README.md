@@ -6,7 +6,7 @@
 
 ## 개요
 
-`lesson-total-package`는 판서, 마인드맵, PBL, 탐구 보고서 수행평가를 하나의 번들로 묶은 Codex 플러그인입니다.
+`lesson-total-package`는 별도 설치한 판서, 마인드맵, HTML 학습지, PBL, 탐구 보고서 수행평가 스킬을 연결하는 Codex 플러그인입니다.
 
 모든 모듈은 기본적으로 **선택 사항**입니다. 필요한 모듈만 골라 쓸 수 있으며, 전체를 한꺼번에 출력하도록 강제하지 않습니다.
 
@@ -14,12 +14,13 @@
 
 ---
 
-## 포함 모듈
+## 연결할 수 있는 모듈
 
 | 모듈 | 역할 |
 |------|------|
 | `board-writing-generator` | 교실 수업용 판서 구조·보드 흐름 설계 |
 | `mindmap-html-generator` | 데스크톱 우선 시각형 HTML 마인드맵 생성 |
+| `html-worksheet-generator` | 교과서 등 원자료에 근거한 인쇄용 HTML 학습지 생성·검사 |
 | `pbl-lesson-designer` | 토론·탐색·글쓰기 기반 PBL 수업 설계 |
 | `inquiry-report-assessment` | 탐구 보고서형 수행평가 설계 |
 
@@ -36,7 +37,7 @@
 ```
 
 ```
-판서, 마인드맵, PBL, 수행평가를 모두 연결한 공개수업 패키지를 패키지형으로 만들어줘.
+판서, 마인드맵, HTML 학습지, PBL, 수행평가를 모두 연결한 공개수업 패키지를 패키지형으로 만들어줘.
 ```
 
 ---
@@ -57,10 +58,13 @@
 |------|-----------|
 | 개념 정리 중심 수업 | `board-writing-generator` 또는 `mindmap-html-generator` |
 | 수업 시각화까지 필요 | `board-writing-generator` + `mindmap-html-generator` |
+| 판서와 교과서 기반 학생 학습지 | `board-writing-generator` + `html-worksheet-generator` |
 | 프로젝트형 문제 해결 | `pbl-lesson-designer` |
 | 보고서형 결과물 평가 | `inquiry-report-assessment` |
 | 수업과 평가를 함께 설계 | `pbl-lesson-designer` + `inquiry-report-assessment` |
-| 전체 수업 패키지 | 4개 모듈 전체 |
+| 전체 수업 패키지 명시 | 5개 모듈 전체 |
+
+한 모듈만 지정하면 해당 스킬이 요청한 파일을 만듭니다. 모듈 이름 없이 패키지를 요청하면 수업 목표에 필요한 최소 조합을 골라 이유를 설명합니다. 구성안만 요청하면 설계 문서를 만들고, 학습지 생성을 요청하면 인쇄용 HTML 파일을 만들고 검사합니다.
 
 ---
 
@@ -78,6 +82,17 @@ cd lesson-total-package
 ```
 
 플러그인 메타데이터는 `.codex-plugin/plugin.json`에 있고, 실제 스킬 본문은 `skills/class-total-package/` 아래에 있습니다.
+
+플러그인에는 연결을 담당하는 `class-total-package`가 들어 있습니다. 사용할 개별 모듈은 위 표의 이름으로 별도 설치합니다. 각 스킬의 원본 디렉터리 전체를 등록된 스킬 루트 아래에 둡니다. 예를 들어 HTML 학습지는 `<스킬 루트>/html-worksheet-generator/SKILL.md`, `templates/worksheet_base.html`, `scripts/verify_html_worksheet.py`를 같은 설치본에서 이용합니다.
+
+저장소 루트에서 선택할 모듈의 설치 상태를 점검할 수 있습니다.
+
+```text
+python skills/class-total-package/scripts/check_module_dependencies.py board-writing-generator html-worksheet-generator
+python skills/class-total-package/scripts/check_module_dependencies.py --full-package
+```
+
+`READY`에는 찾은 설치 경로가 나옵니다. `MISSING`에는 설치할 스킬과 필수 파일이 표시되고 종료 코드는 1입니다. 별도 경로에 설치했다면 `--skills-root "<개별 스킬 디렉터리들이 있는 경로>"`를 추가합니다. 여러 경로를 쓰면 이 옵션을 반복합니다.
 
 ---
 

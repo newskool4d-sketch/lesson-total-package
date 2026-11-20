@@ -69,6 +69,7 @@
     {
       "source_id": "source-textbook",
       "type": "textbook",
+      "location_kind": "packaged",
       "location": "fixture-source.txt",
       "verification_status": "verified",
       "copyright_status": "cleared"
@@ -89,7 +90,7 @@
       "module_id": "html-worksheet-generator",
       "audience": "student",
       "required": true,
-      "path": "artifacts/03_worksheet.md",
+      "path": "artifacts/03_worksheet.html",
       "task_ids": ["task-observe", "task-exit"],
       "source_ids": ["source-textbook"]
     }

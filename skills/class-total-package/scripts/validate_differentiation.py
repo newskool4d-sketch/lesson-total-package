@@ -4,26 +4,24 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any
 
 if __package__:
     from .validation_common import (
-        ValidationInputError, contains_pii, manifest_safety_errors,
+        ValidationInputError, audience_content_errors, contains_pii, manifest_safety_errors,
         read_artifact, read_utf8_bounded, safety_views,
     )
 else:  # direct CLI invocation
     from validation_common import (
-        ValidationInputError, contains_pii, manifest_safety_errors,
+        ValidationInputError, audience_content_errors, contains_pii, manifest_safety_errors,
         read_artifact, read_utf8_bounded, safety_views,
     )
 
 
 TIERS = {"support", "core", "extension"}
 AUDIENCES = {"teacher", "student", "shared"}
-ABILITY_LABELS = re.compile(r"하위 수준|낮은 수준|보충반|기초반|상위 수준|심화반|Below|Above|Group A|Group C")
 
 
 def _nonempty(value: Any) -> bool:
@@ -169,8 +167,7 @@ def validate_differentiation(manifest: dict[str, Any], base_dir: Path | str | No
             except ValidationInputError as exc:
                 errors.append(str(exc))
                 continue
-            if artifact.get("audience") == "student" and any(ABILITY_LABELS.search(view) for view in views):
-                errors.append(f"student ability label in artifact {path_value}")
+            errors.extend(audience_content_errors(audience, views, path_value))
             if has_pii:
                 errors.append(f"PII detected in artifact {path_value}")
 

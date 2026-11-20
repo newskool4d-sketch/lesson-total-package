@@ -71,9 +71,8 @@ Then assemble the minimum useful output set.
 
 If only one module is selected:
 
-- do not wrap it in package framing by default
-- prefer the direct module output shape
-- use package composition only if the user explicitly asked for package framing
+- route the request to the direct module skill
+- pass along any requested folder, file set, or package framing to that skill
 
 ## Minimum useful output sets
 

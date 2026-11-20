@@ -17,6 +17,7 @@
 | `schema_version` | O | 현재 `1.0` |
 | `package_id` | O | 패키지 인스턴스의 유일 ID |
 | `output_mode` | O | `간단형`·`수업형`·`패키지형` 중 하나 |
+| `deliverable_stage` | 선택 | 기본 `generated`. 사용자가 구성안만 지정하면 `design` |
 | `context` | O | 주제·교과·학교급·학년군·수업 시간 |
 | `standard` | O | 코드·문장·상태·출처 |
 | `anchor` | O | 모듈에 공통 삽입할 수업 앵커 |
@@ -45,14 +46,14 @@
 - `final_artifact`
 - `evaluation_points[]`
 
-성취기준은 `standard`에서 참조한다. 코드가 확정되지 않으면 `status: "pending"`, `confirmation_required: true`, 코드 또는 문장에 `확인 필요`를 남긴다.
+주제·교과·학년군은 `context`와 일치해야 한다. 실물 생성에서 두 모듈 이상을 연결하면 각 파일 상단의 앵커를 매니페스트 및 다른 산출물과 대조한다. 성취기준은 `standard`에서 가져온다. 미확인 상태에는 `confirmation_required: true`와 코드 또는 문장의 `확인 필요` 표시가 모두 필요하다.
 
 ## Relationship rules
 
 - 모든 ID는 배열 안에서 유일해야 한다.
-- 모든 `task_id`는 하나 이상의 `artifact.task_ids`에서 참조되어야 한다.
+- 과제마다 활성 담당 모듈을 하나 이상 지정한다. 산출물의 과제는 해당 모듈이 담당해야 한다. 기본 전달 방식인 `delivery: "student-artifact"`에서는 담당 모듈의 학생용·공용 산출물에 과제를 연결한다. 구두 활동은 `delivery: "teacher-oral"`과 실제 발문 `oral_prompt`를 기록하고 담당 교사용·공용 자료에 연결한다.
 - `artifact.module_id`는 활성 모듈이어야 한다.
-- `module.required`를 지정할 때는 boolean 값이어야 한다. `required: true`인 모듈은 활성 상태이며 해당 `module_id`를 가진 산출물이 최소 1개 있어야 한다. 선택 모듈(`required: false` 또는 생략)에는 이 의무를 적용하지 않는다.
+- `module.required`는 불리언이다. 필수 모듈마다 `artifact_role: "primary"`인 본체가 하나 이상 있어야 한다. 생략하면 `primary`로 본다. 교사 연결 메모 등 부속 파일은 `supplement`로 지정할 수 있다. 실물 패키지에서는 두 본체가 동일한 파일을 가리킬 수 없다. HTML 학습지는 실제 HTML 파일과 직접 스킬의 검증 결과를 확인한다.
 - `task.module_owners`에는 비활성 모듈을 넣지 않는다.
 - `artifact.source_ids`와 `criterion.task_ids`는 실제 ID만 참조한다.
 - `module_owners`, `task_ids`, `source_ids`를 기재할 때는 비어 있지 않은 문자열을 원소로 하는 배열로 기록한다.
@@ -63,11 +64,21 @@
 
 `standard.status`와 `source.verification_status`는 다음 중 하나다.
 
-- `verified`: 출처와 문장이 확인됨
-- `user-provided`: 사용자가 제공한 자료를 기준으로 함
+- `verified`: 출처와 문장을 대조함. 성취기준에는 코드·문장·출처를 모두 기록한다.
+- `user-provided`: 사용자 제공 자료를 근거로 함. 성취기준에는 제공받은 코드·문장·자료 식별 정보를 기록한다. 자료에 코드가 없고 확인할 수 없으면 `pending`으로 둔다.
 - `pending`: 확인 전 상태. 확정형 문장으로 출력하지 않음
 
 `copyright_status`는 `cleared`, `attribution_required`, `unknown` 중 하나다. `unknown`은 통과시키지 않으며, `attribution_required`에는 `attribution`을 기록한다.
+
+자료의 보관 방식은 `source.location_kind`로 지정한다.
+
+| 값 | `location`과 검사 |
+|---|---|
+| `packaged` | 패키지 루트 안의 상대 파일 경로. 파일을 읽을 수 있고 내용이 있어야 한다. PDF·이미지도 허용한다. |
+| `external` | 유효한 HTTP(S) URL. 작성자는 확인 시점과 근거를 기록한다. 로컬 검증기는 URL 형식을 검사한다. |
+| `teacher-held` | 교사가 식별할 수 있는 보유 자료명과 사용 범위. 예: 과학 교사용 지도서 12~13쪽. 원본을 패키지에 복제할 필요가 없다. |
+
+이전 매니페스트는 HTTP(S) 주소를 `external`, 그 밖의 위치를 `packaged`로 해석한다. 교사 보유 원본을 참조하는 기존 기록에는 `teacher-held`를 명시한다.
 
 학생 산출물에는 교사용 메모·학생 관찰 기록·정답 및 해설을 넣지 않는다. 이메일·전화번호·주민등록번호 형태의 값은 fixture와 산출물에 넣지 않는다.
 
@@ -94,7 +105,7 @@ JSON·산출물 파일은 각각 최대 8 MiB이며, 메모리에서 받은 매�
 - `course_pathway_status`
 - `data_release`
 
-선수관계·중→고 전이·과목관계는 추천 구조로 기록한다. 의무 이수 순서나 학생 진단 결과로 표현하지 않는다. MCP가 없거나 범위 밖이면 `curriculum_adapter: "none"`과 `standard.status: "pending"`을 사용한다.
+선수관계·중→고 전이·과목관계는 추천 구조로 기록한다. MCP가 없거나 범위 밖이면 `curriculum_adapter: "none"`을 사용한다. 성취기준의 상태는 근거로 정한다. 별도로 공식 원문을 대조했으면 `verified`, 사용자가 코드·문장·근거를 제공했으면 `user-provided`, 확인할 자료가 없으면 `pending`이다.
 
 ## Validation command
 
@@ -103,3 +114,7 @@ py scripts/validate_package.py evals/fixtures/package-manifest.valid.json
 ```
 
 정상 fixture는 종료 코드 0과 `PASS`를 반환해야 한다. 오류 fixture는 종료 코드 1과 구체적인 실패 항목을 반환해야 한다.
+
+구성안만 요청한 경우 매니페스트에 `"deliverable_stage": "design"`을 기록하고 `--stage design`으로 실행한다. 기본 명령은 실물 생성 결과를 검사하며 설계 전용 매니페스트를 거부한다. 설계 검증도 계획 파일 존재·대상·과제 및 출처 연결을 확인한다. 실물 생성 시 모듈 형식 및 앵커 검사를 추가한다.
+
+개별 스킬의 설치 경로를 사전 점검 때 `--skills-root`로 지정했다면 같은 경로를 실물 검증 명령에도 전달한다. 이 옵션은 운영자가 신뢰하는 설치 위치를 지정하는 용도다.

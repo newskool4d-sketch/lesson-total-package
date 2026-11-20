@@ -49,7 +49,7 @@ Use this note as a smoke-test example for `class-total-package`.
 2. source material handling note
 3. board-writing plan
 4. final board snapshot or board sequence
-5. HTML worksheet section plan or generated worksheet contract
+5. a generated student worksheet (`.html`) based on the source, with its final check activity
 6. basic HTML worksheet validation checklist
 7. teacher flow memo
 
@@ -59,6 +59,8 @@ Use this note as a smoke-test example for `class-total-package`.
 - no mind map, PBL, or assessment output is generated unless explicitly requested
 - worksheet content is grounded in the provided PDF or source material
 - source PDF is preserved and source visuals are not invented
-- worksheet expectations include `PDF로 저장 / 인쇄`, `window.print()`, `@page`, and `@media print`
-- generated or planned image paths are checked when source visuals are used
+- the HTML file opens, passes the worksheet skill's `scripts/verify_html_worksheet.py`, and prints with its goal and final activity visible
+- check the referenced local image files when source visuals are used
 - board summary and worksheet final check use the same key concept wording
+
+For an explicit outline-only request, set `deliverable_stage: design` and report the outline as design work. The generation scenario above requires the classroom file.

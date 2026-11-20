@@ -44,7 +44,7 @@ After any change to SKILL.md or references, rerun at least one scenario and reco
 When validating the package, prefer checking:
 
 1. whether only the needed modules are activated
-2. whether single-module requests were kept out of package mode unless explicitly bundled
+2. whether a single named module goes to its direct skill, including requests that call that module's materials a package
 3. whether the chosen templates match school level and subject
 4. whether shared objective, key question, artifact, and evaluation wording stay aligned
 5. whether the output breadth matches `간단형`, `수업형`, or `패키지형`
